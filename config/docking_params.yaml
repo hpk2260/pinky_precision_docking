@@ -1,0 +1,32 @@
+precision_docking_node:
+  ros__parameters:
+    # Marker Settings
+    marker_size: 0.06           # meters (6cm x 6cm)
+    target_marker_id: 0         # Target Marker ID (-1: auto-detect & lock onto any marker)
+    aruco_dictionary_id: "DICT_5X5_250"  # Supports DICT_5X5_50, 5X5_100, 5X5_250
+
+    # Topics
+    use_compressed: true
+    image_topic: "/camera/image_raw"
+    camera_info_topic: "/camera/camera_info"
+    cmd_vel_topic: "/cmd_vel"
+
+    # Docking Goal & Thresholds
+    target_distance: 0.20
+    distance_tolerance: 0.02
+    yaw_tolerance: 0.05
+    lateral_tolerance: 0.03
+
+    # Controller Gains & Limits
+    kp_linear: 0.5
+    kp_angular: 1.2
+    max_linear_vel: 0.10
+    max_angular_vel: 0.35
+    min_linear_vel: 0.02
+    min_angular_vel: 0.05
+    invert_angular: false
+
+    # Safety & Filter
+    loss_timeout: 0.5
+    ema_alpha: 0.6
+    search_angular_vel: 0.20

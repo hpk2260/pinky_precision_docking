@@ -1,0 +1,68 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    pkg_dir = get_package_share_directory('pinky_precision_docking')
+    default_params_file = os.path.join(pkg_dir, 'config', 'docking_params.yaml')
+
+    # Declare Launch Arguments
+    params_file_arg = DeclareLaunchArgument(
+        'params_file',
+        default_value=default_params_file,
+        description='Path to ROS 2 parameters YAML file'
+    )
+
+    target_distance_arg = DeclareLaunchArgument(
+        'target_distance',
+        default_value='0.20',
+        description='Target stopping distance from marker (meters)'
+    )
+
+    use_compressed_arg = DeclareLaunchArgument(
+        'use_compressed',
+        default_value='True',
+        description='Subscribe to compressed image stream'
+    )
+
+    target_marker_id_arg = DeclareLaunchArgument(
+        'target_marker_id',
+        default_value='0',
+        description='ArUco marker ID to track (-1 for auto-lockon)'
+    )
+
+    aruco_dict_arg = DeclareLaunchArgument(
+        'aruco_dictionary_id',
+        default_value='DICT_5X5_250',
+        description='ArUco dictionary (e.g. DICT_5X5_250, DICT_4X4_50)'
+    )
+
+    docking_node = Node(
+        package='pinky_precision_docking',
+        executable='precision_docking_node',
+        name='precision_docking_node',
+        output='screen',
+        parameters=[
+            LaunchConfiguration('params_file'),
+            {
+                'target_distance': LaunchConfiguration('target_distance'),
+                'use_compressed': LaunchConfiguration('use_compressed'),
+                'target_marker_id': LaunchConfiguration('target_marker_id'),
+                'aruco_dictionary_id': LaunchConfiguration('aruco_dictionary_id'),
+            }
+        ]
+    )
+
+    return LaunchDescription([
+        params_file_arg,
+        target_distance_arg,
+        use_compressed_arg,
+        target_marker_id_arg,
+        aruco_dict_arg,
+        docking_node,
+    ])
