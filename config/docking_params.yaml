@@ -33,6 +33,6 @@ precision_docking_node:
     invert_angular: false
 
     # Safety & Filter
-    loss_timeout: 0.8
+    loss_timeout: 1.2
     ema_alpha: 0.6
     search_angular_vel: 0.20

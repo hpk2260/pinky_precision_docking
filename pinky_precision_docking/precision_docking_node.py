@@ -53,6 +53,8 @@ class PrecisionDockingNode(Node):
         self.last_detection_time = 0.0
         self.consecutive_detect_count = 0
         self.min_consecutive_frames = 3
+        self.last_known_bearing: Optional[float] = None
+        self.last_turn_dir: float = 1.0  # +1.0 for CCW (left), -1.0 for CW (right)
 
         # Filtered marker pose [x, y, z, wall_yaw]
         self.filtered_pose = None  # [x, y, z, wall_yaw]
@@ -161,7 +163,7 @@ class PrecisionDockingNode(Node):
         self.declare_parameter('invert_angular', False, ParameterDescriptor(description='Invert steering direction'))
 
         # Safety & filter
-        self.declare_parameter('loss_timeout', 0.8, ParameterDescriptor(description='Timeout before treating marker as lost (s)'))
+        self.declare_parameter('loss_timeout', 1.2, ParameterDescriptor(description='Timeout before treating marker as lost (s)'))
         self.declare_parameter('ema_alpha', 0.6, ParameterDescriptor(description='EMA filter weight (0.0 to 1.0)'))
         self.declare_parameter('search_angular_vel', 0.20, ParameterDescriptor(description='Search rotation velocity (rad/s)'))
 
@@ -323,10 +325,12 @@ class PrecisionDockingNode(Node):
             z = float(target_tvec[2][0])
 
             # Calculate wall normal yaw angle in horizontal plane
-            # Wall normal vector in camera coords points towards camera: -R[:, 2]
+            # Marker plane normal vector in camera coords: [R[0, 2], R[1, 2], R[2, 2]]^T
+            # Wall normal angle: atan2(R[0, 2], R[2, 2]) -> 0.0 when robot directly faces wall
             R, _ = cv2.Rodrigues(target_rvec)
-            wall_yaw = math.atan2(R[0, 2], -R[2, 2])
+            wall_yaw = math.atan2(R[0, 2], R[2, 2])
 
+            self.last_known_bearing = math.atan2(x, z)
             self.raw_pose = (x, y, z, wall_yaw)
 
             # Exponential Moving Average (EMA) Jitter Filter
@@ -373,7 +377,9 @@ class PrecisionDockingNode(Node):
             moved = math.hypot(self.current_odom_x - self.blind_start_x, self.current_odom_y - self.blind_start_y)
             info_str = f"Blind Push: {moved*100:.1f}cm / {self.blind_target_dist*100:.1f}cm"
             cv2.putText(image, info_str, (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
-        elif self.filtered_pose is not None and self.state != DockingState.LOST:
+        elif self.state == DockingState.LOST:
+            cv2.putText(image, "LOST - Active Re-acquisition Scanning...", (w - 490, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 165, 255), 2)
+        elif self.filtered_pose is not None:
             x, y, z, wall_yaw = self.filtered_pose
             dist_err = z - self.target_distance
             pose_str = f"Dist: {z:.3f}m (Goal: {self.target_distance:.2f}m, Err: {dist_err:+.3f}m)"
@@ -400,15 +406,16 @@ class PrecisionDockingNode(Node):
         now = time.time()
         time_since_last_detection = now - self.last_detection_time
 
-        # Watchdog: During BLIND_PUSH or DOCKED, marker loss is expected and ignored
-        if self.state not in [DockingState.SEARCH, DockingState.BLIND_PUSH, DockingState.DOCKED]:
+        # Watchdog: During BLIND_PUSH or DOCKED, marker loss is expected and ignored.
+        # In SEARCH or LOST, state-specific recovery handlers take over.
+        if self.state not in [DockingState.SEARCH, DockingState.LOST, DockingState.BLIND_PUSH, DockingState.DOCKED]:
             if time_since_last_detection > self.loss_timeout:
-                if self.state != DockingState.LOST:
-                    self.get_logger().warn(f"Marker lost for > {self.loss_timeout}s! Emergency stop.")
-                    self.last_state = self.state
-                    self.state = DockingState.LOST
-                self._stop_robot()
-                return
+                self.get_logger().warn(
+                    f"Marker lost for {time_since_last_detection:.2f}s (>{self.loss_timeout}s) in state {self.state.value}! "
+                    f"Initiating active recovery."
+                )
+                self.last_state = self.state
+                self.state = DockingState.LOST
 
         twist = Twist()
         completed = False
@@ -464,16 +471,55 @@ class PrecisionDockingNode(Node):
             twist.angular.z = -self.search_angular_vel if self.invert_angular else self.search_angular_vel
 
     def _handle_lost(self, twist: Twist, time_since_loss: float):
-        """Lost state: stop immediately. Reset to SEARCH if lost too long."""
+        """
+        Smart Lost Handler with Active Re-acquisition:
+        - If marker detected again, immediately re-acquire and resume ALIGN_BEARING.
+        - Phase 1 (0.0s ~ 1.5s after loss_timeout): Gently reverse turn or scan toward last known bearing.
+        - Phase 2 (1.5s ~ 3.0s): Stand still to let camera/network stabilize.
+        - Phase 3 (> 3.0s): Reset to full 360 SEARCH mode.
+        """
         twist.linear.x = 0.0
-        twist.angular.z = 0.0
-        if self.consecutive_detect_count >= self.min_consecutive_frames:
-            self.get_logger().info("Marker re-acquired! Resuming ALIGN_BEARING.")
+
+        if self.consecutive_detect_count >= 1:
+            self.get_logger().info("Marker RE-ACQUIRED! Resuming ALIGN_BEARING.")
             self.state = DockingState.ALIGN_BEARING
-        elif time_since_loss > 3.0:
-            self.get_logger().info("Extended loss timeout. Resetting to SEARCH.")
+            twist.angular.z = 0.0
+            return
+
+        lost_duration = time_since_loss - self.loss_timeout
+
+        if lost_duration < 1.5:
+            # Phase 1: Active recovery scan
+            recovery_w = 0.12
+            if self.last_known_bearing is not None and abs(self.last_known_bearing) > 0.03:
+                # If marker was on the right (bearing > 0), turn right (angular.z < 0)
+                scan_dir = -1.0 if self.last_known_bearing > 0 else 1.0
+            else:
+                # Reverse the last turn direction
+                scan_dir = -self.last_turn_dir
+
+            if self.invert_angular:
+                scan_dir = -scan_dir
+
+            twist.angular.z = scan_dir * recovery_w
+            self.get_logger().info(
+                f"[LOST Active Recovery] Reversing turn to re-acquire marker (w={twist.angular.z:+.2f} rad/s, t={lost_duration:.1f}s)",
+                throttle_duration_sec=0.5
+            )
+        elif lost_duration < 3.0:
+            # Phase 2: Stand still and give camera / Wi-Fi buffer a chance to catch up
+            twist.angular.z = 0.0
+            self.get_logger().info(
+                f"[LOST Paused] Waiting for camera stream... (t={lost_duration:.1f}s)",
+                throttle_duration_sec=0.5
+            )
+        else:
+            # Phase 3: Give up active recovery, reset to full 360 SEARCH
+            self.get_logger().warn("[LOST Timeout] Marker not found during active recovery. Resetting to SEARCH mode.")
             self.filtered_pose = None
+            self.last_known_bearing = None
             self.state = DockingState.SEARCH
+            twist.angular.z = 0.0
 
     def _handle_align_bearing(self, twist: Twist):
         """Rotate in place to center marker in camera view."""
@@ -488,6 +534,8 @@ class PrecisionDockingNode(Node):
             ang_cmd = self.kp_angular * bearing_error
             twist.angular.z = self._clamp_angular(-ang_cmd)
             twist.linear.x = 0.0
+            if abs(twist.angular.z) > 0.02:
+                self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
     def _handle_approach_normal(self, twist: Twist):
         """
@@ -500,11 +548,18 @@ class PrecisionDockingNode(Node):
 
         # When close to wall or well-aligned, check if wall alignment is needed
         if z <= max(self.vision_min_distance + 0.10, 0.25):
-            if self.enable_wall_alignment and abs(wall_yaw) > 0.06:
-                self.get_logger().info(f"Near wall. Wall tilt: {math.degrees(wall_yaw):.1f} deg. Transitioning to ALIGN_WALL.")
-                self.state = DockingState.ALIGN_WALL
-                return
+            if self.enable_wall_alignment and abs(wall_yaw) > self.yaw_tolerance:
+                if abs(bearing_error) < 0.08:  # centered within ~4.5 deg
+                    self.get_logger().info(
+                        f"Near wall ({z:.2f}m). Wall tilt: {math.degrees(wall_yaw):.1f}°. Transitioning to ALIGN_WALL."
+                    )
+                    self.state = DockingState.ALIGN_WALL
+                    return
+                # If bearing not yet centered, keep centering in APPROACH_NORMAL
             else:
+                self.get_logger().info(
+                    f"Near wall ({z:.2f}m). Wall aligned (tilt: {math.degrees(wall_yaw):.1f}°). Advancing to FINAL_APPROACH."
+                )
                 self.state = DockingState.FINAL_APPROACH
                 return
 
@@ -517,25 +572,47 @@ class PrecisionDockingNode(Node):
         else:
             twist.linear.x = 0.0
 
+        if abs(twist.angular.z) > 0.02:
+            self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
+
     def _handle_align_wall(self, twist: Twist):
         """
-        Rotate in place so robot front bumper is parallel to marker wall.
-        Brings wall normal yaw angle to 0.0 radians.
+        Rotate slowly in place so robot front bumper is parallel to marker wall.
+        Includes FOV Guard: aborts alignment turn if marker approaches camera frame boundary.
         """
         x, _, z, wall_yaw = self.filtered_pose
         bearing_error = math.atan2(x, z)
-
-        # Blend wall orientation alignment with bearing preservation
         align_error = wall_yaw
 
-        if abs(align_error) <= 0.04:  # ~2.3 deg parallel
+        # FOV Guard: Camera half-FOV is ~26.7 deg. If bearing_error exceeds 0.16 rad (~9.2 deg),
+        # prioritize keeping the marker in view rather than turning away.
+        max_safe_bearing = 0.16
+        if abs(bearing_error) > max_safe_bearing:
+            self.get_logger().warn(
+                f"[ALIGN_WALL FOV Guard] Marker bearing ({math.degrees(bearing_error):.1f}°) near FOV limit! "
+                f"Pausing wall alignment to re-center."
+            )
+            self.state = DockingState.ALIGN_BEARING
+            return
+
+        if abs(align_error) <= self.yaw_tolerance:
             twist.angular.z = 0.0
-            self.get_logger().info(f"Robot is PARALLEL to wall! (error={math.degrees(align_error):.1f} deg). Advancing to FINAL_APPROACH.")
+            twist.linear.x = 0.0
+            self.get_logger().info(
+                f"Robot is PARALLEL to wall! (error={math.degrees(align_error):.1f}°). Advancing to FINAL_APPROACH."
+            )
             self.state = DockingState.FINAL_APPROACH
         else:
-            ang_cmd = self.kp_angular * 1.0 * align_error
-            twist.angular.z = self._clamp_angular(-ang_cmd)
+            ang_cmd = self.kp_angular * 0.8 * align_error
+            # Limit maximum angular speed during wall alignment to 0.15 rad/s to prevent blur & overshooting
+            max_align_w = 0.15
+            ang_val = max(min(-ang_cmd, max_align_w), -max_align_w)
+            if self.invert_angular:
+                ang_val = -ang_val
+            twist.angular.z = ang_val
             twist.linear.x = 0.0
+            if abs(twist.angular.z) > 0.02:
+                self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
     def _handle_final_approach(self, twist: Twist):
         """
@@ -572,6 +649,9 @@ class PrecisionDockingNode(Node):
 
         lin_cmd = self.kp_linear * dist_err
         twist.linear.x = self._clamp_linear(lin_cmd)
+
+        if abs(twist.angular.z) > 0.02:
+            self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
     def _handle_blind_push(self, twist: Twist):
         """
