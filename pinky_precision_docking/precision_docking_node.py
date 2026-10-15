@@ -225,19 +225,42 @@ class PrecisionDockingNode(Node):
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float64)
 
     def _init_aruco_detector(self):
-        """Initialize modern OpenCV ArUco dictionary and detector."""
-        dict_attr = getattr(cv2.aruco, self.aruco_dict_name, cv2.aruco.DICT_5X5_250)
-        self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(dict_attr)
-
+        """Initialize OpenCV ArUco dictionaries and detector parameters."""
         if hasattr(cv2.aruco, 'DetectorParameters_create'):
             self.aruco_parameters = cv2.aruco.DetectorParameters_create()
         else:
             self.aruco_parameters = cv2.aruco.DetectorParameters()
 
-        if hasattr(cv2.aruco, 'ArucoDetector'):
-            self.aruco_detector = cv2.aruco.ArucoDetector(self.aruco_dictionary, self.aruco_parameters)
-        else:
-            self.aruco_detector = None
+        # Enhance detection across lighting, glare, and small distances
+        self.aruco_parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+        self.aruco_parameters.adaptiveThreshWinSizeMin = 3
+        self.aruco_parameters.adaptiveThreshWinSizeMax = 23
+        self.aruco_parameters.adaptiveThreshWinSizeStep = 10
+        self.aruco_parameters.adaptiveThreshConstant = 7
+        self.aruco_parameters.minMarkerPerimeterRate = 0.02
+        self.aruco_parameters.maxMarkerPerimeterRate = 4.0
+
+        # Preload common ArUco dictionaries for auto-discovery
+        self.supported_dicts = [
+            self.aruco_dict_name,
+            'DICT_4X4_50',
+            'DICT_4X4_100',
+            'DICT_4X4_250',
+            'DICT_5X5_50',
+            'DICT_5X5_100',
+            'DICT_5X5_250',
+            'DICT_6X6_50',
+            'DICT_6X6_250',
+        ]
+        self.supported_dicts = list(dict.fromkeys(self.supported_dicts))
+        self.dict_map = {}
+        for dname in self.supported_dicts:
+            if hasattr(cv2.aruco, dname):
+                self.dict_map[dname] = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dname))
+
+        self.aruco_dictionary = self.dict_map.get(
+            self.aruco_dict_name, cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_250)
+        )
 
     def _camera_info_callback(self, msg: CameraInfo):
         """Receive true camera intrinsics from camera driver."""
@@ -279,22 +302,43 @@ class PrecisionDockingNode(Node):
 
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
-        if self.aruco_detector is not None:
-            corners, ids, _ = self.aruco_detector.detectMarkers(gray)
-        else:
-            corners, ids, _ = cv2.aruco.detectMarkers(gray, self.aruco_dictionary, parameters=self.aruco_parameters)
+        # 1. Primary detection using active dictionary
+        corners, ids, _ = cv2.aruco.detectMarkers(gray, self.aruco_dictionary, parameters=self.aruco_parameters)
+
+        # 2. If no markers found, scan alternate dictionaries (e.g. 4x4 vs 5x5)
+        if ids is None or len(ids) == 0:
+            for alt_name, alt_dict in self.dict_map.items():
+                if alt_name == self.aruco_dict_name:
+                    continue
+                c_test, id_test, _ = cv2.aruco.detectMarkers(gray, alt_dict, parameters=self.aruco_parameters)
+                if id_test is not None and len(id_test) > 0:
+                    corners, ids = c_test, id_test
+                    self.get_logger().info(
+                        f"[Auto-Dict] Marker found using '{alt_name}'! Switched active dictionary from '{self.aruco_dict_name}'.",
+                        throttle_duration_sec=3.0
+                    )
+                    self.aruco_dict_name = alt_name
+                    self.aruco_dictionary = alt_dict
+                    break
 
         target_detected = False
         target_rvec = None
         target_tvec = None
 
         if ids is not None and len(ids) > 0:
-            for idx, marker_id in enumerate(ids.flatten()):
-                if self.target_marker_id == -1:
-                    self.target_marker_id = int(marker_id)
-                    self.get_logger().info(f"[Auto-Lock] Locked onto detected Marker ID: {self.target_marker_id}")
+            # ALWAYS draw all detected markers so they are visible on debug feed
+            cv2.aruco.drawDetectedMarkers(cv_image, corners, ids)
 
-                if marker_id == self.target_marker_id:
+            for idx, marker_id in enumerate(ids.flatten()):
+                marker_id_int = int(marker_id)
+                # Auto-lock onto first detected marker if target_marker_id is -1
+                if self.target_marker_id == -1:
+                    self.target_marker_id = marker_id_int
+                    self.get_logger().info(
+                        f"[Auto-Lock] Successfully locked onto detected Marker ID: {self.target_marker_id} ({self.aruco_dict_name})"
+                    )
+
+                if marker_id_int == self.target_marker_id:
                     target_detected = True
                     target_corner = corners[idx]
 
@@ -314,6 +358,13 @@ class PrecisionDockingNode(Node):
                         target_rvec = rvec
                         target_tvec = tvec
                     break
+
+            if not target_detected:
+                self.get_logger().warn(
+                    f"Detected Marker ID(s) {ids.flatten().tolist()}, but waiting for target_marker_id={self.target_marker_id}! "
+                    f"(Pass target_marker_id:=-1 to auto-lock onto any ID)",
+                    throttle_duration_sec=2.0
+                )
 
         now = time.time()
         if target_detected and target_tvec is not None:
@@ -343,7 +394,6 @@ class PrecisionDockingNode(Node):
                 self.filtered_pose[2] = a * z + (1.0 - a) * self.filtered_pose[2]
                 self.filtered_pose[3] = a * wall_yaw + (1.0 - a) * self.filtered_pose[3]
 
-            cv2.aruco.drawDetectedMarkers(cv_image, corners, ids)
             cv2.drawFrameAxes(
                 cv_image, self.camera_matrix, self.dist_coeffs,
                 target_rvec, target_tvec, self.marker_size * 0.8
@@ -351,10 +401,10 @@ class PrecisionDockingNode(Node):
         else:
             self.consecutive_detect_count = 0
 
-        self._draw_osd(cv_image)
+        self._draw_osd(cv_image, ids, target_detected)
         self._publish_debug_image(cv_image)
 
-    def _draw_osd(self, image: np.ndarray):
+    def _draw_osd(self, image: np.ndarray, detected_ids=None, target_detected: bool = False):
         """Render informative On-Screen Display (OSD) overlay on camera feed."""
         h, w = image.shape[:2]
         cv2.rectangle(image, (0, 0), (w, 85), (20, 20, 20), -1)
@@ -370,7 +420,8 @@ class PrecisionDockingNode(Node):
             DockingState.LOST: (0, 0, 255)
         }.get(self.state, (200, 200, 200))
 
-        cv2.putText(image, "PINKY PRO AUTO-DOCKING v2.0", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
+        dict_info = f"Dict: {self.aruco_dict_name} | ID: {self.target_marker_id}"
+        cv2.putText(image, f"PINKY DOCKING v2.2 ({dict_info})", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2)
         cv2.putText(image, f"STATE: {self.state.value}", (15, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.75, state_color, 2)
 
         if self.state == DockingState.BLIND_PUSH:
@@ -379,6 +430,9 @@ class PrecisionDockingNode(Node):
             cv2.putText(image, info_str, (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
         elif self.state == DockingState.LOST:
             cv2.putText(image, "LOST - Active Re-acquisition Scanning...", (w - 490, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 165, 255), 2)
+        elif detected_ids is not None and len(detected_ids) > 0 and not target_detected:
+            warn_str = f"Seen ID {detected_ids.flatten().tolist()} != Target {self.target_marker_id}"
+            cv2.putText(image, warn_str, (w - 480, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 165, 255), 2)
         elif self.filtered_pose is not None:
             x, y, z, wall_yaw = self.filtered_pose
             dist_err = z - self.target_distance
@@ -387,7 +441,7 @@ class PrecisionDockingNode(Node):
             cv2.putText(image, pose_str, (w - 480, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 220, 220), 1)
             cv2.putText(image, lat_str, (w - 480, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 220, 220), 1)
         else:
-            cv2.putText(image, "Waiting for marker detection...", (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (150, 150, 150), 1)
+            cv2.putText(image, "Searching for ArUco marker...", (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (150, 150, 150), 1)
 
     def _publish_debug_image(self, image: np.ndarray):
         """Compress and publish debug visualization image."""

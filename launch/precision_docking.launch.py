@@ -32,7 +32,7 @@ def generate_launch_description():
 
     target_marker_id_arg = DeclareLaunchArgument(
         'target_marker_id',
-        default_value='0',
+        default_value='-1',
         description='ArUco marker ID to track (-1 for auto-lockon)'
     )
 

@@ -2,7 +2,7 @@ precision_docking_node:
   ros__parameters:
     # Marker Settings
     marker_size: 0.06           # meters (6cm x 6cm)
-    target_marker_id: 0         # Target Marker ID (-1: auto-detect & lock onto any marker)
+    target_marker_id: -1        # Target Marker ID (-1: auto-detect & lock onto any marker)
     aruco_dictionary_id: "DICT_5X5_250"  # Supports DICT_5X5_50, 5X5_100, 5X5_250
 
     # Topics
