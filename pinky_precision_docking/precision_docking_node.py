@@ -52,7 +52,7 @@ class PrecisionDockingNode(Node):
         self.last_state = None
         self.last_detection_time = 0.0
         self.consecutive_detect_count = 0
-        self.min_consecutive_frames = 3
+        self.min_consecutive_frames = 1
         self.last_known_bearing: Optional[float] = None
         self.last_turn_dir: float = 1.0  # +1.0 for CCW (left), -1.0 for CW (right)
 
@@ -225,13 +225,13 @@ class PrecisionDockingNode(Node):
         self.dist_coeffs = np.zeros((5, 1), dtype=np.float64)
 
     def _init_aruco_detector(self):
-        """Initialize OpenCV ArUco dictionaries and detector parameters."""
+        """Initialize OpenCV ArUco detector strictly for 5x5 markers."""
         if hasattr(cv2.aruco, 'DetectorParameters_create'):
             self.aruco_parameters = cv2.aruco.DetectorParameters_create()
         else:
             self.aruco_parameters = cv2.aruco.DetectorParameters()
 
-        # Enhance detection across lighting, glare, and small distances
+        # Enhance detection across lighting, glare, and distance
         self.aruco_parameters.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
         self.aruco_parameters.adaptiveThreshWinSizeMin = 3
         self.aruco_parameters.adaptiveThreshWinSizeMax = 23
@@ -240,27 +240,9 @@ class PrecisionDockingNode(Node):
         self.aruco_parameters.minMarkerPerimeterRate = 0.02
         self.aruco_parameters.maxMarkerPerimeterRate = 4.0
 
-        # Preload common ArUco dictionaries for auto-discovery
-        self.supported_dicts = [
-            self.aruco_dict_name,
-            'DICT_4X4_50',
-            'DICT_4X4_100',
-            'DICT_4X4_250',
-            'DICT_5X5_50',
-            'DICT_5X5_100',
-            'DICT_5X5_250',
-            'DICT_6X6_50',
-            'DICT_6X6_250',
-        ]
-        self.supported_dicts = list(dict.fromkeys(self.supported_dicts))
-        self.dict_map = {}
-        for dname in self.supported_dicts:
-            if hasattr(cv2.aruco, dname):
-                self.dict_map[dname] = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dname))
-
-        self.aruco_dictionary = self.dict_map.get(
-            self.aruco_dict_name, cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_250)
-        )
+        # Strictly 5X5 dictionary
+        dict_attr = getattr(cv2.aruco, self.aruco_dict_name, cv2.aruco.DICT_5X5_250)
+        self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(dict_attr)
 
     def _camera_info_callback(self, msg: CameraInfo):
         """Receive true camera intrinsics from camera driver."""
@@ -302,24 +284,8 @@ class PrecisionDockingNode(Node):
 
         gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
-        # 1. Primary detection using active dictionary
+        # Strictly detect 5x5 ArUco markers using 5x5 dictionary
         corners, ids, _ = cv2.aruco.detectMarkers(gray, self.aruco_dictionary, parameters=self.aruco_parameters)
-
-        # 2. If no markers found, scan alternate dictionaries (e.g. 4x4 vs 5x5)
-        if ids is None or len(ids) == 0:
-            for alt_name, alt_dict in self.dict_map.items():
-                if alt_name == self.aruco_dict_name:
-                    continue
-                c_test, id_test, _ = cv2.aruco.detectMarkers(gray, alt_dict, parameters=self.aruco_parameters)
-                if id_test is not None and len(id_test) > 0:
-                    corners, ids = c_test, id_test
-                    self.get_logger().info(
-                        f"[Auto-Dict] Marker found using '{alt_name}'! Switched active dictionary from '{self.aruco_dict_name}'.",
-                        throttle_duration_sec=3.0
-                    )
-                    self.aruco_dict_name = alt_name
-                    self.aruco_dictionary = alt_dict
-                    break
 
         target_detected = False
         target_rvec = None
@@ -515,10 +481,11 @@ class PrecisionDockingNode(Node):
         self.completed_pub.publish(status_msg)
 
     def _handle_search(self, twist: Twist):
-        """Rotate slowly until marker is stably found."""
-        if self.consecutive_detect_count >= self.min_consecutive_frames and self.filtered_pose is not None:
-            self.get_logger().info("Marker acquired! Transitioning to ALIGN_BEARING.")
+        """Rotate slowly until 5x5 marker is detected."""
+        if self.consecutive_detect_count >= 1 and self.filtered_pose is not None:
+            self.get_logger().info("5x5 Marker acquired! Instantly stopping rotation and transitioning to ALIGN_BEARING.")
             self.state = DockingState.ALIGN_BEARING
+            twist.linear.x = 0.0
             twist.angular.z = 0.0
         else:
             twist.linear.x = 0.0

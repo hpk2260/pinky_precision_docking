@@ -12,7 +12,7 @@ import numpy as np
 
 def generate_marker(
     marker_id: int = 0,
-    dict_type: int = cv2.aruco.DICT_4X4_50,
+    dict_type: int = cv2.aruco.DICT_5X5_250,
     marker_size_px: int = 400,
     border_px: int = 80,
     output_dir: str = '.'
@@ -37,7 +37,7 @@ def generate_marker(
     canvas[border_px:border_px + marker_size_px, border_px:border_px + marker_size_px] = marker_img
 
     # Draw label text at bottom
-    text = f"ArUco DICT_4X4_50 | ID: {marker_id} | 60x60mm"
+    text = f"ArUco DICT_5X5_250 | ID: {marker_id} | 60x60mm"
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 0.6
     thickness = 2
