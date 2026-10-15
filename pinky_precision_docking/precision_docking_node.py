@@ -11,6 +11,8 @@ Features:
 
 from enum import Enum
 import math
+import signal
+import sys
 import time
 from typing import List, Optional
 
@@ -561,28 +563,17 @@ class PrecisionDockingNode(Node):
     def _handle_approach_normal(self, twist: Twist):
         """
         Advance along line of sight while maintaining centering.
-        Transitions to ALIGN_WALL or FINAL_APPROACH.
+        Transitions smoothly to FINAL_APPROACH when within 0.25m.
         """
         x, _, z, wall_yaw = self.filtered_pose
         dist_err = z - self.target_distance
         bearing_error = math.atan2(x, z)
 
-        # When close to wall or well-aligned, check if wall alignment is needed
+        # When within 0.25m, transition smoothly to FINAL_APPROACH
         if z <= max(self.vision_min_distance + 0.10, 0.25):
-            if self.enable_wall_alignment and abs(wall_yaw) > self.yaw_tolerance:
-                if abs(bearing_error) < 0.08:  # centered within ~4.5 deg
-                    self.get_logger().info(
-                        f"Near wall ({z:.2f}m). Wall tilt: {math.degrees(wall_yaw):.1f}°. Transitioning to ALIGN_WALL."
-                    )
-                    self.state = DockingState.ALIGN_WALL
-                    return
-                # If bearing not yet centered, keep centering in APPROACH_NORMAL
-            else:
-                self.get_logger().info(
-                    f"Near wall ({z:.2f}m). Wall aligned (tilt: {math.degrees(wall_yaw):.1f}°). Advancing to FINAL_APPROACH."
-                )
-                self.state = DockingState.FINAL_APPROACH
-                return
+            self.get_logger().info(f"Near wall ({z:.2f}m). Advancing to FINAL_APPROACH.")
+            self.state = DockingState.FINAL_APPROACH
+            return
 
         ang_cmd = self.kp_angular * bearing_error
         twist.angular.z = self._clamp_angular(-ang_cmd)
@@ -597,50 +588,17 @@ class PrecisionDockingNode(Node):
             self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
     def _handle_align_wall(self, twist: Twist):
-        """
-        Rotate slowly in place so robot front bumper is parallel to marker wall.
-        Includes FOV Guard: aborts alignment turn if marker approaches camera frame boundary.
-        """
-        x, _, z, wall_yaw = self.filtered_pose
-        bearing_error = math.atan2(x, z)
-        align_error = wall_yaw
-
-        # FOV Guard: Camera half-FOV is ~26.7 deg. If bearing_error exceeds 0.16 rad (~9.2 deg),
-        # prioritize keeping the marker in view rather than turning away.
-        max_safe_bearing = 0.16
-        if abs(bearing_error) > max_safe_bearing:
-            self.get_logger().warn(
-                f"[ALIGN_WALL FOV Guard] Marker bearing ({math.degrees(bearing_error):.1f}°) near FOV limit! "
-                f"Pausing wall alignment to re-center."
-            )
-            self.state = DockingState.ALIGN_BEARING
-            return
-
-        if abs(align_error) <= self.yaw_tolerance:
-            twist.angular.z = 0.0
-            twist.linear.x = 0.0
-            self.get_logger().info(
-                f"Robot is PARALLEL to wall! (error={math.degrees(align_error):.1f}°). Advancing to FINAL_APPROACH."
-            )
-            self.state = DockingState.FINAL_APPROACH
-        else:
-            ang_cmd = self.kp_angular * 0.8 * align_error
-            # Limit maximum angular speed during wall alignment to 0.15 rad/s to prevent blur & overshooting
-            max_align_w = 0.15
-            ang_val = max(min(-ang_cmd, max_align_w), -max_align_w)
-            if self.invert_angular:
-                ang_val = -ang_val
-            twist.angular.z = ang_val
-            twist.linear.x = 0.0
-            if abs(twist.angular.z) > 0.02:
-                self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
+        """Seamlessly hands off to continuous forward blended FINAL_APPROACH."""
+        self.state = DockingState.FINAL_APPROACH
+        self._handle_final_approach(twist)
 
     def _handle_final_approach(self, twist: Twist):
         """
-        Final straight-line approach directly into docking target.
+        Final approach driving directly into docking target.
+        Smoothly blends wall parallel orientation so robot arrives perpendicular to wall without stopping in place.
         If target_distance is < vision_min_distance, hands off to BLIND_PUSH.
         """
-        x, _, z, _ = self.filtered_pose
+        x, _, z, wall_yaw = self.filtered_pose
         dist_err = z - self.target_distance
         bearing_error = math.atan2(x, z)
 
@@ -665,11 +623,24 @@ class PrecisionDockingNode(Node):
             twist.angular.z = 0.0
             return
 
-        ang_cmd = self.kp_angular * 1.2 * bearing_error
+        # Continuous smooth wall alignment blended with bearing tracking:
+        # Instead of stopping in place and oscillating left/right,
+        # we steer forward along a smooth curve towards both marker center and wall normal!
+        if self.enable_wall_alignment:
+            # wall_weight smoothly scales up as we get closer (up to 0.30)
+            wall_weight = min(max((0.30 - z) / 0.20, 0.0), 0.30)
+            combined_error = (1.0 - wall_weight) * bearing_error + wall_weight * wall_yaw
+            ang_cmd = self.kp_angular * 1.1 * combined_error
+        else:
+            ang_cmd = self.kp_angular * 1.1 * bearing_error
+
         twist.angular.z = self._clamp_angular(-ang_cmd)
 
         lin_cmd = self.kp_linear * dist_err
         twist.linear.x = self._clamp_linear(lin_cmd)
+
+        if abs(twist.angular.z) > 0.02:
+            self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
         if abs(twist.angular.z) > 0.02:
             self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
@@ -720,22 +691,40 @@ class PrecisionDockingNode(Node):
         self.cmd_vel_pub.publish(twist)
 
     def _stop_robot(self):
-        """Publish zero velocity to immediately stop the robot."""
+        """Publish zero velocity repeatedly to reliably halt robot base over DDS Wi-Fi."""
         zero_twist = Twist()
-        self.cmd_vel_pub.publish(zero_twist)
+        for _ in range(8):
+            self.cmd_vel_pub.publish(zero_twist)
+            time.sleep(0.02)
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = PrecisionDockingNode()
+
+    def sig_handler(sig, frame):
+        node.get_logger().info("Ctrl+C (SIGINT) received! Emergency stopping Pinky motors...")
+        node._stop_robot()
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
+        if rclpy.ok():
+            rclpy.shutdown()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, sig_handler)
+    signal.signal(signal.SIGTERM, sig_handler)
+
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException):
         node.get_logger().info("Shutting down PrecisionDockingNode...")
     finally:
         node._stop_robot()
-        node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            node.destroy_node()
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':
