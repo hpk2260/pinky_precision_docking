@@ -44,7 +44,7 @@ def generate_launch_description():
 
     wall_align_arg = DeclareLaunchArgument(
         'enable_wall_alignment',
-        default_value='True',
+        default_value='False',
         description='Align robot front parallel to marker wall'
     )
 

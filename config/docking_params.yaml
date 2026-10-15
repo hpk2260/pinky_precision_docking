@@ -18,7 +18,7 @@ precision_docking_node:
     lateral_tolerance: 0.03
 
     # Advanced Features (Question 1 & 2 Solutions)
-    enable_wall_alignment: true   # Align robot front parallel to wall
+    enable_wall_alignment: false  # Pure direct marker pursuit (prevents turning away from marker)
     enable_blind_push: true       # Use odometry for <10cm ultra-close docking (prevents marker lost)
     vision_min_distance: 0.14     # Hand-off distance to odometry blind drive (m)
     blind_push_speed: 0.04        # Low-speed straight push velocity (m/s)

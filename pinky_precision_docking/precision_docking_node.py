@@ -623,24 +623,14 @@ class PrecisionDockingNode(Node):
             twist.angular.z = 0.0
             return
 
-        # Continuous smooth wall alignment blended with bearing tracking:
-        # Instead of stopping in place and oscillating left/right,
-        # we steer forward along a smooth curve towards both marker center and wall normal!
-        if self.enable_wall_alignment:
-            # wall_weight smoothly scales up as we get closer (up to 0.30)
-            wall_weight = min(max((0.30 - z) / 0.20, 0.0), 0.30)
-            combined_error = (1.0 - wall_weight) * bearing_error + wall_weight * wall_yaw
-            ang_cmd = self.kp_angular * 1.1 * combined_error
-        else:
-            ang_cmd = self.kp_angular * 1.1 * bearing_error
-
+        # Pure Bearing Pursuit during final approach:
+        # Strictly steer towards the center of the marker (bearing_error)
+        # to ensure the camera never turns away from the marker and never causes lost state!
+        ang_cmd = self.kp_angular * 1.2 * bearing_error
         twist.angular.z = self._clamp_angular(-ang_cmd)
 
         lin_cmd = self.kp_linear * dist_err
         twist.linear.x = self._clamp_linear(lin_cmd)
-
-        if abs(twist.angular.z) > 0.02:
-            self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
         if abs(twist.angular.z) > 0.02:
             self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
