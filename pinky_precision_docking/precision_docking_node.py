@@ -33,6 +33,8 @@ from std_msgs.msg import Bool
 class DockingState(Enum):
     SEARCH = "SEARCH"
     ALIGN_BEARING = "ALIGN_BEARING"
+    NAV_TO_STAGE = "NAV_TO_STAGE"
+    ALIGN_ON_AXIS = "ALIGN_ON_AXIS"
     APPROACH_NORMAL = "APPROACH_NORMAL"
     ALIGN_WALL = "ALIGN_WALL"
     FINAL_APPROACH = "FINAL_APPROACH"
@@ -58,9 +60,10 @@ class PrecisionDockingNode(Node):
         self.last_known_bearing: Optional[float] = None
         self.last_turn_dir: float = 1.0  # +1.0 for CCW (left), -1.0 for CW (right)
 
-        # Filtered marker pose [x, y, z, wall_yaw]
-        self.filtered_pose = None  # [x, y, z, wall_yaw]
+        # Filtered marker pose [x, y, z, wall_yaw, x_m, z_m]
+        self.filtered_pose = None  # [x, y, z, wall_yaw, x_m, z_m]
         self.raw_pose = None
+        self.last_R: Optional[np.ndarray] = None
 
         # Odometry tracking for blind final drive
         self.current_odom_x = 0.0
@@ -126,8 +129,8 @@ class PrecisionDockingNode(Node):
         self.add_on_set_parameters_callback(self._on_parameter_update)
 
         self.get_logger().info(
-            f"PrecisionDockingNode v2.0 ready! Target ID: {self.target_marker_id}, "
-            f"Goal: {self.target_distance}m, WallAlign: {self.enable_wall_alignment}, BlindPush: {self.enable_blind_push}"
+            f"PrecisionDockingNode v3.0 (Collinear Staging) ready! Target ID: {self.target_marker_id}, "
+            f"Goal: {self.target_distance}m, Staging: {self.enable_staging} ({self.stage_distance}m), BlindPush: {self.enable_blind_push}"
         )
 
     def _declare_and_get_parameters(self):
@@ -150,7 +153,9 @@ class PrecisionDockingNode(Node):
         self.declare_parameter('lateral_tolerance', 0.03, ParameterDescriptor(description='Lateral X tolerance (meters)'))
 
         # Advanced Solutions (Feature Flags)
-        self.declare_parameter('enable_wall_alignment', True, ParameterDescriptor(description='Align robot parallel to marker wall'))
+        self.declare_parameter('enable_staging', True, ParameterDescriptor(description='Navigate to staging waypoint on marker normal axis'))
+        self.declare_parameter('stage_distance', 0.40, ParameterDescriptor(description='Distance along marker normal axis for staging waypoint (m)'))
+        self.declare_parameter('enable_wall_alignment', False, ParameterDescriptor(description='Align robot parallel to marker wall'))
         self.declare_parameter('enable_blind_push', True, ParameterDescriptor(description='Use odometry for <10cm final approach'))
         self.declare_parameter('vision_min_distance', 0.14, ParameterDescriptor(description='Distance before switching to blind drive (m)'))
         self.declare_parameter('blind_push_speed', 0.04, ParameterDescriptor(description='Linear velocity during blind final drive (m/s)'))
@@ -184,6 +189,8 @@ class PrecisionDockingNode(Node):
         self.distance_tolerance = self.get_parameter('distance_tolerance').value
         self.yaw_tolerance = self.get_parameter('yaw_tolerance').value
         self.lateral_tolerance = self.get_parameter('lateral_tolerance').value
+        self.enable_staging = self.get_parameter('enable_staging').value
+        self.stage_distance = self.get_parameter('stage_distance').value
         self.enable_wall_alignment = self.get_parameter('enable_wall_alignment').value
         self.enable_blind_push = self.get_parameter('enable_blind_push').value
         self.vision_min_distance = self.get_parameter('vision_min_distance').value
@@ -349,18 +356,27 @@ class PrecisionDockingNode(Node):
             R, _ = cv2.Rodrigues(target_rvec)
             wall_yaw = math.atan2(R[0, 2], R[2, 2])
 
+            # Camera position in marker frame: P_c = R * P_m + tvec => P_m = -R.T @ tvec
+            # x_m is lateral offset from the marker normal ray, z_m is normal distance
+            P_cam_in_m = -R.T @ target_tvec
+            x_m = float(P_cam_in_m[0, 0])
+            z_m = float(P_cam_in_m[2, 0])
+
+            self.last_R = R
             self.last_known_bearing = math.atan2(x, z)
-            self.raw_pose = (x, y, z, wall_yaw)
+            self.raw_pose = (x, y, z, wall_yaw, x_m, z_m)
 
             # Exponential Moving Average (EMA) Jitter Filter
             if self.filtered_pose is None:
-                self.filtered_pose = [x, y, z, wall_yaw]
+                self.filtered_pose = [x, y, z, wall_yaw, x_m, z_m]
             else:
                 a = self.ema_alpha
                 self.filtered_pose[0] = a * x + (1.0 - a) * self.filtered_pose[0]
                 self.filtered_pose[1] = a * y + (1.0 - a) * self.filtered_pose[1]
                 self.filtered_pose[2] = a * z + (1.0 - a) * self.filtered_pose[2]
                 self.filtered_pose[3] = a * wall_yaw + (1.0 - a) * self.filtered_pose[3]
+                self.filtered_pose[4] = a * x_m + (1.0 - a) * self.filtered_pose[4]
+                self.filtered_pose[5] = a * z_m + (1.0 - a) * self.filtered_pose[5]
 
             cv2.drawFrameAxes(
                 cv_image, self.camera_matrix, self.dist_coeffs,
@@ -380,7 +396,9 @@ class PrecisionDockingNode(Node):
         state_color = {
             DockingState.SEARCH: (0, 165, 255),
             DockingState.ALIGN_BEARING: (255, 200, 0),
-            DockingState.APPROACH_NORMAL: (255, 120, 0),
+            DockingState.NAV_TO_STAGE: (255, 140, 0),
+            DockingState.ALIGN_ON_AXIS: (200, 100, 255),
+            DockingState.APPROACH_NORMAL: (0, 200, 255),
             DockingState.ALIGN_WALL: (255, 50, 200),
             DockingState.FINAL_APPROACH: (0, 255, 255),
             DockingState.BLIND_PUSH: (255, 100, 255),
@@ -389,7 +407,7 @@ class PrecisionDockingNode(Node):
         }.get(self.state, (200, 200, 200))
 
         dict_info = f"Dict: {self.aruco_dict_name} | ID: {self.target_marker_id}"
-        cv2.putText(image, f"PINKY DOCKING v2.2 ({dict_info})", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2)
+        cv2.putText(image, f"PINKY DOCKING v3.0 ({dict_info})", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2)
         cv2.putText(image, f"STATE: {self.state.value}", (15, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.75, state_color, 2)
 
         if self.state == DockingState.BLIND_PUSH:
@@ -402,12 +420,12 @@ class PrecisionDockingNode(Node):
             warn_str = f"Seen ID {detected_ids.flatten().tolist()} != Target {self.target_marker_id}"
             cv2.putText(image, warn_str, (w - 480, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 165, 255), 2)
         elif self.filtered_pose is not None:
-            x, y, z, wall_yaw = self.filtered_pose
+            x, y, z, wall_yaw, x_m, z_m = self.filtered_pose
             dist_err = z - self.target_distance
-            pose_str = f"Dist: {z:.3f}m (Goal: {self.target_distance:.2f}m, Err: {dist_err:+.3f}m)"
-            lat_str = f"LatErr(X): {x:+.3f}m | WallAngle: {math.degrees(wall_yaw):+.1f} deg"
-            cv2.putText(image, pose_str, (w - 480, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 220, 220), 1)
-            cv2.putText(image, lat_str, (w - 480, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 220, 220), 1)
+            pose_str = f"Dist: {z:.3f}m (Goal: {self.target_distance:.2f}m) | Stage(Zm): {z_m:.3f}m"
+            lat_str = f"NormalErr(Xm): {x_m:+.3f}m | CamX: {x:+.3f}m | Angle: {math.degrees(wall_yaw):+.1f} deg"
+            cv2.putText(image, pose_str, (w - 530, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (220, 220, 220), 1)
+            cv2.putText(image, lat_str, (w - 530, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (220, 220, 220), 1)
         else:
             cv2.putText(image, "Searching for ArUco marker...", (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (150, 150, 150), 1)
 
@@ -451,6 +469,12 @@ class PrecisionDockingNode(Node):
         elif self.state == DockingState.ALIGN_BEARING:
             self._handle_align_bearing(twist)
 
+        elif self.state == DockingState.NAV_TO_STAGE:
+            self._handle_nav_to_stage(twist)
+
+        elif self.state == DockingState.ALIGN_ON_AXIS:
+            self._handle_align_on_axis(twist)
+
         elif self.state == DockingState.APPROACH_NORMAL:
             self._handle_approach_normal(twist)
 
@@ -468,11 +492,15 @@ class PrecisionDockingNode(Node):
             twist.angular.z = 0.0
             completed = True
 
-        if self.state in [DockingState.APPROACH_NORMAL, DockingState.ALIGN_WALL, DockingState.FINAL_APPROACH, DockingState.BLIND_PUSH]:
+        if self.state in [
+            DockingState.NAV_TO_STAGE, DockingState.ALIGN_ON_AXIS,
+            DockingState.APPROACH_NORMAL, DockingState.ALIGN_WALL,
+            DockingState.FINAL_APPROACH, DockingState.BLIND_PUSH
+        ]:
             if self.filtered_pose is not None:
-                x, _, z, _ = self.filtered_pose
+                x, _, z, _, x_m, z_m = self.filtered_pose
                 self.get_logger().info(
-                    f"[{self.state.value}] Dist: {z:.2f}m, X: {x:+.2f}m | Cmd: v={twist.linear.x:.2f}m/s, w={twist.angular.z:+.2f}rad/s",
+                    f"[{self.state.value}] Dist(Z): {z:.2f}m, AxisErr(Xm): {x_m:+.3f}m | Cmd: v={twist.linear.x:.2f}m/s, w={twist.angular.z:+.2f}rad/s",
                     throttle_duration_sec=0.5
                 )
 
@@ -546,13 +574,27 @@ class PrecisionDockingNode(Node):
 
     def _handle_align_bearing(self, twist: Twist):
         """Rotate in place to center marker in camera view."""
-        x, _, z, _ = self.filtered_pose
+        x, _, z, _, x_m, z_m = self.filtered_pose
         bearing_error = math.atan2(x, z)
 
         if abs(bearing_error) <= 0.04:  # ~2.3 deg
             twist.angular.z = 0.0
-            self.get_logger().info("Bearing centered! Transitioning to APPROACH_NORMAL.")
-            self.state = DockingState.APPROACH_NORMAL
+            # Check if Staging Waypoint should be engaged:
+            # We engage staging if:
+            # 1. enable_staging is True
+            # 2. robot is sufficiently far (z > stage_distance + 0.05)
+            # 3. robot has lateral misalignment from normal axis (|x_m| > lateral_tolerance)
+            if self.enable_staging and (z > self.stage_distance + 0.05) and (abs(x_m) > self.lateral_tolerance):
+                self.get_logger().info(
+                    f"Bearing centered! Lateral axis offset is {x_m:+.3f}m (>{self.lateral_tolerance:.2f}m). "
+                    f"Transitioning to NAV_TO_STAGE (Stage goal: {self.stage_distance:.2f}m on normal axis)."
+                )
+                self.state = DockingState.NAV_TO_STAGE
+            else:
+                self.get_logger().info(
+                    f"Bearing centered! (z={z:.2f}m, x_m={x_m:+.3f}m). Transitioning to APPROACH_NORMAL."
+                )
+                self.state = DockingState.APPROACH_NORMAL
         else:
             ang_cmd = self.kp_angular * bearing_error
             twist.angular.z = self._clamp_angular(-ang_cmd)
@@ -560,18 +602,101 @@ class PrecisionDockingNode(Node):
             if abs(twist.angular.z) > 0.02:
                 self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
 
+    def _handle_nav_to_stage(self, twist: Twist):
+        """
+        Navigate towards the staging waypoint located on the marker normal axis at distance D_stage.
+        Maintains FOV guard so marker never leaves camera field of view.
+        """
+        if self.filtered_pose is None or self.last_R is None:
+            twist.linear.x = 0.0
+            twist.angular.z = 0.0
+            return
+
+        x, y, z, wall_yaw, x_m, z_m = self.filtered_pose
+        bearing_marker = math.atan2(x, z)
+
+        # Compute staging waypoint in camera frame:
+        # P_stage_m = [0, 0, stage_distance]^T
+        # P_stage_c = R @ P_stage_m + tvec
+        dx = self.last_R[0, 2] * self.stage_distance + x
+        dz = self.last_R[2, 2] * self.stage_distance + z
+        dist_to_stage = math.hypot(dx, dz)
+        bearing_to_stage = math.atan2(dx, dz)
+
+        # Check transition condition to ALIGN_ON_AXIS:
+        # 1. Close to staging waypoint (dist_to_stage <= 0.07m), OR
+        # 2. Well-aligned with normal axis (abs(x_m) <= lateral_tolerance) and z <= stage_distance + 0.05m, OR
+        # 3. Passed the staging distance (z <= stage_distance)
+        if dist_to_stage <= 0.07 or (abs(x_m) <= self.lateral_tolerance and z <= self.stage_distance + 0.05) or z <= self.stage_distance:
+            self.get_logger().info(
+                f"Arrived at Staging Zone! (dist_stage={dist_to_stage:.3f}m, x_m={x_m:+.3f}m, z={z:.3f}m). "
+                f"Transitioning to ALIGN_ON_AXIS."
+            )
+            self.state = DockingState.ALIGN_ON_AXIS
+            twist.linear.x = 0.0
+            twist.angular.z = 0.0
+            return
+
+        # Angular steering towards staging waypoint with FOV Guard
+        ang_cmd = self.kp_angular * bearing_to_stage
+        w_cmd = -ang_cmd
+
+        # FOV Guard: Keep marker strictly inside +/- 0.28 rad (+/- 16 deg) of camera view
+        fov_limit = 0.28
+        if bearing_marker >= fov_limit and w_cmd > 0.0:
+            # Turning left would push marker further right -> block left turn
+            w_cmd = -0.05
+        elif bearing_marker <= -fov_limit and w_cmd < 0.0:
+            # Turning right would push marker further left -> block right turn
+            w_cmd = 0.05
+
+        twist.angular.z = self._clamp_angular(w_cmd)
+
+        # Forward velocity proportional to distance to staging waypoint
+        lin_cmd = self.kp_linear * dist_to_stage
+        # Slow down forward drive if angular error to waypoint is significant
+        lin_cmd *= max(0.3, math.cos(bearing_to_stage))
+        twist.linear.x = self._clamp_linear(lin_cmd)
+
+        if abs(twist.angular.z) > 0.02:
+            self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
+
+    def _handle_align_on_axis(self, twist: Twist):
+        """
+        Robot is now positioned on the marker normal axis (x_m ~ 0).
+        Rotate in place to align the camera optical axis directly with the marker center.
+        Once bearing is aligned, the camera lens axis and marker normal axis become completely collinear!
+        """
+        x, _, z, _, x_m, _ = self.filtered_pose
+        bearing_marker = math.atan2(x, z)
+
+        if abs(bearing_marker) <= 0.03:  # ~1.7 deg precision
+            twist.linear.x = 0.0
+            twist.angular.z = 0.0
+            self.get_logger().info(
+                f"=== COLLINEAR ALIGNMENT ACHIEVED! === Axis offset x_m={x_m:+.3f}m, bearing={math.degrees(bearing_marker):+.1f} deg. "
+                f"Transitioning to APPROACH_NORMAL for straight-line docking."
+            )
+            self.state = DockingState.APPROACH_NORMAL
+        else:
+            ang_cmd = self.kp_angular * bearing_marker
+            twist.angular.z = self._clamp_angular(-ang_cmd)
+            twist.linear.x = 0.0
+            if abs(twist.angular.z) > 0.02:
+                self.last_turn_dir = 1.0 if twist.angular.z > 0 else -1.0
+
     def _handle_approach_normal(self, twist: Twist):
         """
-        Advance along line of sight while maintaining centering.
+        Advance along collinear normal axis while maintaining pure bearing centering.
         Transitions smoothly to FINAL_APPROACH when within 0.25m.
         """
-        x, _, z, wall_yaw = self.filtered_pose
+        x, _, z, wall_yaw, x_m, _ = self.filtered_pose
         dist_err = z - self.target_distance
         bearing_error = math.atan2(x, z)
 
         # When within 0.25m, transition smoothly to FINAL_APPROACH
         if z <= max(self.vision_min_distance + 0.10, 0.25):
-            self.get_logger().info(f"Near wall ({z:.2f}m). Advancing to FINAL_APPROACH.")
+            self.get_logger().info(f"Near wall ({z:.2f}m, x_m={x_m:+.3f}m). Advancing to FINAL_APPROACH.")
             self.state = DockingState.FINAL_APPROACH
             return
 
@@ -598,7 +723,7 @@ class PrecisionDockingNode(Node):
         Smoothly blends wall parallel orientation so robot arrives perpendicular to wall without stopping in place.
         If target_distance is < vision_min_distance, hands off to BLIND_PUSH.
         """
-        x, _, z, wall_yaw = self.filtered_pose
+        x, _, z, wall_yaw, x_m, _ = self.filtered_pose
         dist_err = z - self.target_distance
         bearing_error = math.atan2(x, z)
 
@@ -610,14 +735,14 @@ class PrecisionDockingNode(Node):
                 self.blind_start_y = self.current_odom_y
                 self.blind_target_dist = push_dist
                 self.get_logger().info(
-                    f"Reached vision limit ({z*100:.1f}cm). Switching to BLIND PUSH for final {push_dist*100:.1f}cm using Odometry!"
+                    f"Reached vision limit ({z*100:.1f}cm, x_m={x_m:+.3f}m). Switching to BLIND PUSH for final {push_dist*100:.1f}cm using Odometry!"
                 )
                 self.state = DockingState.BLIND_PUSH
                 return
 
         # Check standard completion condition
         if abs(dist_err) <= self.distance_tolerance and abs(bearing_error) <= 0.05:
-            self.get_logger().info(f"=== DOCKING COMPLETED! === Final Dist: {z:.3f}m, Err: {dist_err:+.3f}m")
+            self.get_logger().info(f"=== DOCKING COMPLETED! === Final Dist: {z:.3f}m, AxisErr(Xm): {x_m:+.3f}m")
             self.state = DockingState.DOCKED
             twist.linear.x = 0.0
             twist.angular.z = 0.0
