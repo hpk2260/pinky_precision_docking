@@ -56,7 +56,7 @@ def generate_launch_description():
 
     t_maneuver_min_dist_arg = DeclareLaunchArgument(
         't_maneuver_min_dist',
-        default_value='0.35',
+        default_value='0.20',
         description='Minimum distance from marker to perform T-maneuver (meters)'
     )
 
