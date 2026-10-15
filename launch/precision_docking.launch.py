@@ -48,16 +48,16 @@ def generate_launch_description():
         description='Align robot front parallel to marker wall'
     )
 
-    staging_arg = DeclareLaunchArgument(
-        'enable_staging',
+    t_maneuver_arg = DeclareLaunchArgument(
+        'enable_t_maneuver',
         default_value='True',
-        description='Navigate to staging waypoint on marker normal axis'
+        description='Use orthogonal T-maneuver for collinear alignment'
     )
 
-    stage_distance_arg = DeclareLaunchArgument(
-        'stage_distance',
-        default_value='0.40',
-        description='Staging waypoint distance along marker normal axis (meters)'
+    t_maneuver_min_dist_arg = DeclareLaunchArgument(
+        't_maneuver_min_dist',
+        default_value='0.35',
+        description='Minimum distance from marker to perform T-maneuver (meters)'
     )
 
     blind_push_arg = DeclareLaunchArgument(
@@ -78,8 +78,8 @@ def generate_launch_description():
                 'use_compressed': LaunchConfiguration('use_compressed'),
                 'target_marker_id': LaunchConfiguration('target_marker_id'),
                 'aruco_dictionary_id': LaunchConfiguration('aruco_dictionary_id'),
-                'enable_staging': LaunchConfiguration('enable_staging'),
-                'stage_distance': LaunchConfiguration('stage_distance'),
+                'enable_t_maneuver': LaunchConfiguration('enable_t_maneuver'),
+                't_maneuver_min_dist': LaunchConfiguration('t_maneuver_min_dist'),
                 'enable_wall_alignment': LaunchConfiguration('enable_wall_alignment'),
                 'enable_blind_push': LaunchConfiguration('enable_blind_push'),
             }
@@ -93,8 +93,8 @@ def generate_launch_description():
         target_marker_id_arg,
         aruco_dict_arg,
         wall_align_arg,
-        staging_arg,
-        stage_distance_arg,
+        t_maneuver_arg,
+        t_maneuver_min_dist_arg,
         blind_push_arg,
         docking_node,
     ])

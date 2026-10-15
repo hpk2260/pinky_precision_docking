@@ -17,9 +17,10 @@ precision_docking_node:
     yaw_tolerance: 0.05
     lateral_tolerance: 0.03
 
-    # Advanced Features (Question 1, 2, 3 Solutions)
-    enable_staging: true          # Navigate to staging waypoint on marker normal axis (collinear docking)
-    stage_distance: 0.40          # Staging waypoint distance along marker normal axis (m)
+    # Advanced Features (T-Maneuver Collinear Alignment)
+    enable_t_maneuver: true       # Orthogonal T-maneuver (90 deg turn -> lateral drive -> 90 deg return)
+    t_maneuver_min_dist: 0.35     # Minimum distance from marker to perform T-maneuver (m)
+    t_maneuver_lateral_speed: 0.05 # Low-speed lateral drive velocity (m/s)
     enable_wall_alignment: false  # Pure direct marker pursuit (prevents turning away from marker)
     enable_blind_push: true       # Use odometry for <10cm ultra-close docking (prevents marker lost)
     vision_min_distance: 0.14     # Hand-off distance to odometry blind drive (m)
