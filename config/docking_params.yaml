@@ -17,6 +17,12 @@ precision_docking_node:
     yaw_tolerance: 0.05
     lateral_tolerance: 0.03
 
+    # Advanced Features (Question 1 & 2 Solutions)
+    enable_wall_alignment: true   # Align robot front parallel to wall
+    enable_blind_push: true       # Use odometry for <10cm ultra-close docking (prevents marker lost)
+    vision_min_distance: 0.14     # Hand-off distance to odometry blind drive (m)
+    blind_push_speed: 0.04        # Low-speed straight push velocity (m/s)
+
     # Controller Gains & Limits
     kp_linear: 0.5
     kp_angular: 1.2
@@ -27,6 +33,6 @@ precision_docking_node:
     invert_angular: false
 
     # Safety & Filter
-    loss_timeout: 0.5
+    loss_timeout: 0.8
     ema_alpha: 0.6
     search_angular_vel: 0.20

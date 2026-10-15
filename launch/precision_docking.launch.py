@@ -42,6 +42,18 @@ def generate_launch_description():
         description='ArUco dictionary (e.g. DICT_5X5_250, DICT_4X4_50)'
     )
 
+    wall_align_arg = DeclareLaunchArgument(
+        'enable_wall_alignment',
+        default_value='True',
+        description='Align robot front parallel to marker wall'
+    )
+
+    blind_push_arg = DeclareLaunchArgument(
+        'enable_blind_push',
+        default_value='True',
+        description='Use odometry for <10cm ultra-close docking without marker loss'
+    )
+
     docking_node = Node(
         package='pinky_precision_docking',
         executable='precision_docking_node',
@@ -54,6 +66,8 @@ def generate_launch_description():
                 'use_compressed': LaunchConfiguration('use_compressed'),
                 'target_marker_id': LaunchConfiguration('target_marker_id'),
                 'aruco_dictionary_id': LaunchConfiguration('aruco_dictionary_id'),
+                'enable_wall_alignment': LaunchConfiguration('enable_wall_alignment'),
+                'enable_blind_push': LaunchConfiguration('enable_blind_push'),
             }
         ]
     )
@@ -64,5 +78,7 @@ def generate_launch_description():
         use_compressed_arg,
         target_marker_id_arg,
         aruco_dict_arg,
+        wall_align_arg,
+        blind_push_arg,
         docking_node,
     ])
