@@ -721,10 +721,12 @@ class PrecisionDockingNode(Node):
             twist.linear.x = 0.0
             twist.angular.z = 0.0
             self.turn_start_yaw = self.current_odom_yaw
-            self.t_turn_angle_2 = -self.t_turn_angle_1  # exact reverse turn
+            # At P_closest, the robot heading is parallel to the wall (orthogonal to the normal axis).
+            # To face directly along the marker normal axis towards the marker, the robot must turn exactly 90 deg!
+            self.t_turn_angle_2 = -math.copysign(math.pi / 2.0, self.t_turn_angle_1)
             self.get_logger().info(
                 f"Step 2 Complete (moved {moved*100:.1f}cm). "
-                f"Step 3: Turning back by {math.degrees(self.t_turn_angle_2):+.1f} deg to face marker squarely."
+                f"Step 3: Turning {math.degrees(self.t_turn_angle_2):+.1f} deg (orthogonal to wall) to face marker squarely on normal axis."
             )
             self.state = DockingState.T_RETURN_FACING
         else:
