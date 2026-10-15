@@ -110,6 +110,7 @@ class PrecisionDockingNode(Node):
         # Publishers
         self.cmd_vel_pub = self.create_publisher(Twist, self.cmd_vel_topic, reliable_qos)
         self.completed_pub = self.create_publisher(Bool, '/docking_completed', reliable_qos)
+        self.debug_raw_pub = self.create_publisher(Image, '/docking/debug_image', sensor_qos)
         self.debug_image_pub = self.create_publisher(
             CompressedImage, '/docking/debug_image/compressed', sensor_qos
         )
@@ -436,7 +437,8 @@ class PrecisionDockingNode(Node):
     def _draw_osd(self, image: np.ndarray, detected_ids=None, target_detected: bool = False):
         """Render informative On-Screen Display (OSD) overlay on camera feed."""
         h, w = image.shape[:2]
-        cv2.rectangle(image, (0, 0), (w, 85), (20, 20, 20), -1)
+        banner_h = 75
+        cv2.rectangle(image, (0, 0), (w, banner_h), (20, 20, 20), -1)
 
         state_color = {
             DockingState.SEARCH: (0, 165, 255),
@@ -453,44 +455,57 @@ class PrecisionDockingNode(Node):
             DockingState.LOST: (0, 0, 255)
         }.get(self.state, (200, 200, 200))
 
-        dict_info = f"Dict: {self.aruco_dict_name} | ID: {self.target_marker_id}"
-        cv2.putText(image, f"PINKY DOCKING v3.5 ({dict_info})", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2)
-        cv2.putText(image, f"STATE: {self.state.value}", (15, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.75, state_color, 2)
+        # Row 1 (y=22): Title, State, Target Info
+        cv2.putText(image, "PINKY DOCKING v3.7", (15, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
+        cv2.putText(image, f"STATE: {self.state.value}", (200, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.60, state_color, 2)
+        dict_info = f"Dict: {self.aruco_dict_name} | Target: {self.target_marker_id}"
+        cv2.putText(image, dict_info, (max(w - 280, 400), 22), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (180, 180, 180), 1)
 
+        # Row 2 & 3 (y=46, y=66): Telemetry & Step details
         if self.state == DockingState.T_TURN_PARALLEL:
             turned = self._angle_diff(self.current_odom_yaw, self.turn_start_yaw)
-            cv2.putText(image, f"T-Maneuver: Turn 1 ({math.degrees(turned):+.1f}/{math.degrees(self.t_turn_angle_1):+.1f} deg)", (w - 530, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 140, 0), 2)
+            cv2.putText(image, f"Step 1: Turn to Wall ({math.degrees(turned):+.1f} deg / Goal: {math.degrees(self.t_turn_angle_1):+.1f} deg)", (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 140, 0), 2)
         elif self.state == DockingState.T_DRIVE_LATERAL:
             moved = math.hypot(self.current_odom_x - self.lat_start_x, self.current_odom_y - self.lat_start_y)
-            cv2.putText(image, f"T-Maneuver: Lateral Drive ({moved*100:.1f}/{self.lat_target_dist*100:.1f}cm)", (w - 530, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 80, 20), 2)
+            cv2.putText(image, f"Step 2: Lateral Drive ({moved*100:.1f}cm / Goal: {self.lat_target_dist*100:.1f}cm)", (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 80, 20), 2)
         elif self.state == DockingState.T_RETURN_FACING:
             turned = self._angle_diff(self.current_odom_yaw, self.turn_start_yaw)
-            cv2.putText(image, f"T-Maneuver: Return Turn ({math.degrees(turned):+.1f}/{math.degrees(self.t_turn_angle_2):+.1f} deg)", (w - 530, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 100, 255), 2)
+            cv2.putText(image, f"Step 3: Return Turn ({math.degrees(turned):+.1f} deg / Goal: {math.degrees(self.t_turn_angle_2):+.1f} deg)", (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 100, 255), 2)
         elif self.state == DockingState.FINE_ALIGN:
-            cv2.putText(image, "T-Maneuver: Fine Centering on Normal Axis...", (w - 530, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 200, 255), 2)
+            cv2.putText(image, "Step 4: Fine Centering on Marker Normal Axis...", (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 200, 255), 2)
         elif self.state == DockingState.BLIND_PUSH:
             moved = math.hypot(self.current_odom_x - self.blind_start_x, self.current_odom_y - self.blind_start_y)
             info_str = f"Blind Push: {moved*100:.1f}cm / {self.blind_target_dist*100:.1f}cm"
-            cv2.putText(image, info_str, (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 255), 2)
+            cv2.putText(image, info_str, (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 255, 255), 2)
         elif self.state == DockingState.LOST:
-            cv2.putText(image, "LOST - Active Re-acquisition Scanning...", (w - 490, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 165, 255), 2)
+            cv2.putText(image, "LOST - Active Re-acquisition Scanning...", (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
         elif detected_ids is not None and len(detected_ids) > 0 and not target_detected:
             warn_str = f"Seen ID {detected_ids.flatten().tolist()} != Target {self.target_marker_id}"
-            cv2.putText(image, warn_str, (w - 480, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 165, 255), 2)
+            cv2.putText(image, warn_str, (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 165, 255), 2)
         elif self.filtered_pose is not None:
             x, y, z, wall_angle, signed_lat, dist_along_normal = self.filtered_pose
-            dist_err = z - self.target_distance
-            pose_str = f"Dist: {z:.3f}m (Goal: {self.target_distance:.2f}m) | NormalDist: {dist_along_normal:.3f}m"
+            pose_str = f"Dist(Z): {z:.3f}m (Goal: {self.target_distance:.2f}m) | NormalDist: {dist_along_normal:.3f}m"
             lat_str = f"LatErr: {signed_lat*100:+.1f}cm | AngleErr: {math.degrees(wall_angle):+.1f} deg"
-            cv2.putText(image, pose_str, (w - 530, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (220, 220, 220), 1)
-            cv2.putText(image, lat_str, (w - 530, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.50, (220, 220, 220), 1)
+            cv2.putText(image, pose_str, (15, 46), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (220, 220, 220), 1)
+            cv2.putText(image, lat_str, (15, 66), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 255, 200), 1)
         else:
-            cv2.putText(image, "Searching for ArUco marker...", (w - 450, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (150, 150, 150), 1)
+            cv2.putText(image, "Searching for ArUco 5x5 marker...", (15, 48), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (150, 150, 150), 1)
 
     def _publish_debug_image(self, image: np.ndarray):
-        """Compress and publish debug visualization image."""
-        if self.debug_image_pub.get_subscription_count() > 0:
-            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 65]
+        """Publish debug visualization image as both raw Image and CompressedImage."""
+        has_sub_raw = self.debug_raw_pub.get_subscription_count() > 0
+        has_sub_comp = self.debug_image_pub.get_subscription_count() > 0
+
+        if has_sub_raw:
+            try:
+                raw_msg = self.bridge.cv2_to_imgmsg(image, encoding="bgr8")
+                raw_msg.header.stamp = self.get_clock().now().to_msg()
+                self.debug_raw_pub.publish(raw_msg)
+            except Exception:
+                pass
+
+        if has_sub_comp or not has_sub_raw:
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 75]
             success, encoded_img = cv2.imencode('.jpg', image, encode_param)
             if success:
                 msg = CompressedImage()
