@@ -369,15 +369,23 @@
         <visual name="post_FR"><pose>0.0300 0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
         <visual name="post_RL"><pose>-0.0300 -0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
         <visual name="post_RR"><pose>-0.0300 0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
-        <!-- Orange Lower Beams (Backing for ArUco ID 6 at X=-0.039m) -->
-        <visual name="beam_LF"><pose>0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.035</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
-        <visual name="beam_LR"><pose>-0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.035</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <!-- Orange Top Beams (Flush with Wall Top at z = 0.25m) -->
-        <visual name="beam_TF"><pose>0.0320 0 0.115 0 0 0</pose><geometry><box><size>0.012 0.21 0.020</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <visual name="beam_TR"><pose>-0.0320 0 0.115 0 0 0</pose><geometry><box><size>0.012 0.21 0.020</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <!-- Shelf Deck & Warehouse Cargo Box -->
-        <visual name="deck"><pose>0 0 -0.037 0 0 0</pose><geometry><box><size>0.06 0.21 0.006</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
-        <visual name="box"><pose>0 0 0.025 0 0 0</pose><geometry><box><size>0.050 0.16 0.11</size></box></geometry><material><ambient>0.55 0.40 0.25 1</ambient><diffuse>0.65 0.48 0.32 1</diffuse></material></visual>
+        
+        <!-- === Tier 1 (하단 1단: z=0.068m, ArUco ID 6 부착 빔) === -->
+        <visual name="t1_beam_F"><pose>0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t1_beam_R"><pose>-0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t1_deck"><pose>0 0 -0.045 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
+        <visual name="t1_box"><pose>0 0 -0.016 0 0 0</pose><geometry><box><size>0.048 0.16 0.054</size></box></geometry><material><ambient>0.55 0.40 0.25 1</ambient><diffuse>0.65 0.48 0.32 1</diffuse></material></visual>
+
+        <!-- === Tier 2 (중단 2단: z=0.145m) === -->
+        <visual name="t2_beam_F"><pose>0.0320 0 0.020 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t2_beam_R"><pose>-0.0320 0 0.020 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t2_deck"><pose>0 0 0.032 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
+        <visual name="t2_box"><pose>0 0 0.061 0 0 0</pose><geometry><box><size>0.048 0.16 0.054</size></box></geometry><material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.85 0.85 0.85 1</diffuse></material></visual>
+
+        <!-- === Tier 3 (상단 3단: z=0.235m, 외벽 높이 일치) === -->
+        <visual name="t3_beam_F"><pose>0.0320 0 0.110 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t3_beam_R"><pose>-0.0320 0 0.110 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t3_deck"><pose>0 0 0.120 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
       </link>
     </model>
 
@@ -393,15 +401,23 @@
         <visual name="post_FR"><pose>0.0300 0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
         <visual name="post_RL"><pose>-0.0300 -0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
         <visual name="post_RR"><pose>-0.0300 0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
-        <!-- Orange Lower Beams (Backing for ArUco ID 7 at X=-0.039m) -->
-        <visual name="beam_LF"><pose>0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.035</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
-        <visual name="beam_LR"><pose>-0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.035</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <!-- Orange Top Beams (Flush with Wall Top at z = 0.25m) -->
-        <visual name="beam_TF"><pose>0.0320 0 0.115 0 0 0</pose><geometry><box><size>0.012 0.21 0.020</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <visual name="beam_TR"><pose>-0.0320 0 0.115 0 0 0</pose><geometry><box><size>0.012 0.21 0.020</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <!-- Shelf Deck & Warehouse Cargo Box -->
-        <visual name="deck"><pose>0 0 -0.037 0 0 0</pose><geometry><box><size>0.06 0.21 0.006</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
-        <visual name="box"><pose>0 0 0.025 0 0 0</pose><geometry><box><size>0.050 0.16 0.11</size></box></geometry><material><ambient>0.50 0.36 0.22 1</ambient><diffuse>0.60 0.44 0.28 1</diffuse></material></visual>
+        
+        <!-- === Tier 1 (하단 1단: z=0.068m, ArUco ID 7 부착 빔) === -->
+        <visual name="t1_beam_F"><pose>0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t1_beam_R"><pose>-0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t1_deck"><pose>0 0 -0.045 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
+        <visual name="t1_box"><pose>0 0 -0.016 0 0 0</pose><geometry><box><size>0.048 0.16 0.054</size></box></geometry><material><ambient>0.50 0.36 0.22 1</ambient><diffuse>0.60 0.44 0.28 1</diffuse></material></visual>
+
+        <!-- === Tier 2 (중단 2단: z=0.145m) === -->
+        <visual name="t2_beam_F"><pose>0.0320 0 0.020 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t2_beam_R"><pose>-0.0320 0 0.020 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t2_deck"><pose>0 0 0.032 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
+        <visual name="t2_box"><pose>0 0 0.061 0 0 0</pose><geometry><box><size>0.048 0.16 0.054</size></box></geometry><material><ambient>0.15 0.28 0.48 1</ambient><diffuse>0.20 0.35 0.58 1</diffuse></material></visual>
+
+        <!-- === Tier 3 (상단 3단: z=0.235m, 외벽 높이 일치) === -->
+        <visual name="t3_beam_F"><pose>0.0320 0 0.110 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t3_beam_R"><pose>-0.0320 0 0.110 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t3_deck"><pose>0 0 0.120 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
       </link>
     </model>
 
@@ -417,15 +433,23 @@
         <visual name="post_FR"><pose>0.0300 0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
         <visual name="post_RL"><pose>-0.0300 -0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
         <visual name="post_RR"><pose>-0.0300 0.110 0 0 0 0</pose><geometry><box><size>0.015 0.015 0.25</size></box></geometry><material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
-        <!-- Orange Lower Beams (Backing for ArUco ID 8 at X=-0.039m) -->
-        <visual name="beam_LF"><pose>0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.035</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
-        <visual name="beam_LR"><pose>-0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.035</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <!-- Orange Top Beams (Flush with Wall Top at z = 0.25m) -->
-        <visual name="beam_TF"><pose>0.0320 0 0.115 0 0 0</pose><geometry><box><size>0.012 0.21 0.020</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <visual name="beam_TR"><pose>-0.0320 0 0.115 0 0 0</pose><geometry><box><size>0.012 0.21 0.020</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
-        <!-- Shelf Deck & Warehouse Cargo Box -->
-        <visual name="deck"><pose>0 0 -0.037 0 0 0</pose><geometry><box><size>0.06 0.21 0.006</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
-        <visual name="box"><pose>0 0 0.025 0 0 0</pose><geometry><box><size>0.050 0.16 0.11</size></box></geometry><material><ambient>0.15 0.28 0.48 1</ambient><diffuse>0.20 0.35 0.58 1</diffuse></material></visual>
+        
+        <!-- === Tier 1 (하단 1단: z=0.068m, ArUco ID 8 부착 빔) === -->
+        <visual name="t1_beam_F"><pose>0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t1_beam_R"><pose>-0.0320 0 -0.057 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t1_deck"><pose>0 0 -0.045 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
+        <visual name="t1_box"><pose>0 0 -0.016 0 0 0</pose><geometry><box><size>0.048 0.16 0.054</size></box></geometry><material><ambient>0.55 0.40 0.25 1</ambient><diffuse>0.65 0.48 0.32 1</diffuse></material></visual>
+
+        <!-- === Tier 2 (중단 2단: z=0.145m) === -->
+        <visual name="t2_beam_F"><pose>0.0320 0 0.020 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t2_beam_R"><pose>-0.0320 0 0.020 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t2_deck"><pose>0 0 0.032 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
+        <visual name="t2_box"><pose>0 0 0.061 0 0 0</pose><geometry><box><size>0.048 0.16 0.054</size></box></geometry><material><ambient>0.50 0.36 0.22 1</ambient><diffuse>0.60 0.44 0.28 1</diffuse></material></visual>
+
+        <!-- === Tier 3 (상단 3단: z=0.235m, 외벽 높이 일치) === -->
+        <visual name="t3_beam_F"><pose>0.0320 0 0.110 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material></visual>
+        <visual name="t3_beam_R"><pose>-0.0320 0 0.110 0 0 0</pose><geometry><box><size>0.012 0.21 0.024</size></box></geometry><material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material></visual>
+        <visual name="t3_deck"><pose>0 0 0.120 0 0 0</pose><geometry><box><size>0.055 0.21 0.004</size></box></geometry><material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse></material></visual>
       </link>
     </model>
 
