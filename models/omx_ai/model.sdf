@@ -3,24 +3,15 @@
   <model name="omx_ai">
     <static>true</static>
     <link name="link">
-      <!-- Mounting Workstation Base Stand -->
-      <collision name="stand_collision">
-        <pose>0.02 0 0.025 0 0 0</pose>
-        <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
+      <!-- Direct Base Collision on Floor -->
+      <collision name="base_collision">
+        <pose>0.01 0 0.025 0 0 0</pose>
+        <geometry><box><size>0.09 0.09 0.05</size></box></geometry>
       </collision>
-      <visual name="stand_visual">
-        <pose>0.02 0 0.025 0 0 0</pose>
-        <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
-        <material>
-          <ambient>0.2 0.22 0.25 1</ambient>
-          <diffuse>0.25 0.28 0.32 1</diffuse>
-          <specular>0.3 0.3 0.3 1</specular>
-        </material>
-      </visual>
 
-      <!-- Follower 01 Base -->
+      <!-- Follower 01 Base (z=0) -->
       <visual name="base_visual">
-        <pose>0.00000 0.00000 0.05000 0 0 0</pose>
+        <pose>0.00000 0.00000 0.00000 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -36,7 +27,7 @@
 
       <!-- Follower 02 Base Tilt (White/Silver Frame) -->
       <visual name="link1_visual">
-        <pose>-0.01125 0.00000 0.08400 0 0 0</pose>
+        <pose>-0.01125 0.00000 0.03400 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -52,7 +43,7 @@
 
       <!-- Follower 03 Middle Vertical (White/Silver Frame) -->
       <visual name="link2_visual">
-        <pose>-0.01125 0.00000 0.14750 0 -0.45000 0</pose>
+        <pose>-0.01125 0.00000 0.09750 0 -0.45000 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -68,7 +59,7 @@
 
       <!-- Follower 04 Middle Horizontal (White/Silver Frame) -->
       <visual name="link3_visual">
-        <pose>-0.02310 0.00000 0.26744 0 0.25000 0</pose>
+        <pose>-0.02310 0.00000 0.21744 0 0.25000 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -84,7 +75,7 @@
 
       <!-- Follower 05 Tip -->
       <visual name="link4_visual">
-        <pose>0.13387 0.00000 0.22736 0 0 0</pose>
+        <pose>0.13387 0.00000 0.17736 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -100,7 +91,7 @@
 
       <!-- Follower 06 Pan -->
       <visual name="link5_visual">
-        <pose>0.16257 0.00000 0.22736 0 0 0</pose>
+        <pose>0.16257 0.00000 0.17736 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -116,7 +107,7 @@
 
       <!-- Follower 07 Gripper Motorized -->
       <visual name="gripper_motorized_visual">
-        <pose>0.19207 0.00750 0.22736 0 0 0</pose>
+        <pose>0.19207 0.00750 0.17736 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
@@ -132,7 +123,7 @@
 
       <!-- Follower 08 Gripper Gear -->
       <visual name="gripper_gear_visual">
-        <pose>0.19207 -0.01080 0.22736 0 0 0</pose>
+        <pose>0.19207 -0.01080 0.17736 0 0 0</pose>
         <geometry>
           <mesh>
             <scale>0.001 0.001 0.001</scale>
