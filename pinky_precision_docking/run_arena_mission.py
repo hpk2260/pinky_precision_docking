@@ -21,6 +21,7 @@ from typing import List, Tuple
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Twist
+from nav_msgs.msg import Odometry
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from std_msgs.msg import Bool, Int32
 from std_srvs.srv import Trigger
@@ -177,27 +178,84 @@ class ArenaMissionController:
             play_docking_complete(blocking=False)
         return True
 
-    def undock_backup(self, distance_m: float = 0.20, speed: float = -0.04):
-        """Safely back up straight to clear wall/shelf before handing control back to Nav2."""
-        duration = abs(distance_m / speed)
-        print(f"[Undock] Backing up {distance_m*100:.0f}cm straight ({speed:.2f}m/s for {duration:.1f}s) to clear obstacle...")
+    def undock_backup(self, distance_m: float = 0.20, speed: float = -0.04, timeout_sec: float = 15.0):
+        """
+        Safely back up straight using Odometry closed-loop feedback.
+        Measures actual euclidean distance traveled to prevent overshooting caused by simulation latency/RTF.
+        """
+        print(f"[Undock] Closed-loop backing up target: {distance_m*100:.1f}cm straight at {speed:.2f}m/s...")
         if self.enable_sound:
             start_reverse_melody()
+
+        start_pos = None
+        current_pos = [0.0, 0.0]
+
+        def _odom_cb(msg: Odometry):
+            nonlocal start_pos, current_pos
+            px = msg.pose.pose.position.x
+            py = msg.pose.pose.position.y
+            current_pos = [px, py]
+            if start_pos is None:
+                start_pos = [px, py]
+
+        # Temporary subscription to /odom for precision distance tracking
+        odom_sub = self.nav.create_subscription(Odometry, '/odom', _odom_cb, 10)
+
+        # Wait for first valid odometry pose (up to 1.5s)
+        wait_start = time.time()
+        while start_pos is None and (time.time() - wait_start) < 1.5:
+            rclpy.spin_once(self.nav, timeout_sec=0.05)
+
+        start_clk = self.nav.get_clock().now()
+        start_wall_t = time.time()
+        last_log_wall_t = start_wall_t
+
         try:
             msg = Twist()
             msg.linear.x = float(speed)
-            start_clk = self.nav.get_clock().now()
-            target_clk = start_clk + rclpy.duration.Duration(seconds=duration)
-            while self.nav.get_clock().now() < target_clk:
+
+            while rclpy.ok():
+                rclpy.spin_once(self.nav, timeout_sec=0.02)
+
+                # Calculate actual euclidean distance traveled from start
+                if start_pos is not None:
+                    dx = current_pos[0] - start_pos[0]
+                    dy = current_pos[1] - start_pos[1]
+                    dist_traveled = math.hypot(dx, dy)
+                else:
+                    dist_traveled = 0.0
+
+                now_wall_t = time.time()
+                if now_wall_t - last_log_wall_t >= 1.0:
+                    last_log_wall_t = now_wall_t
+                    print(f"  [Undock Progress] Traveled: {dist_traveled*100:.1f}cm / {distance_m*100:.1f}cm")
+
+                # Check if exact target distance reached
+                if dist_traveled >= distance_m:
+                    print(f"[Undock] Target distance reached! Traveled: {dist_traveled*100:.1f}cm.")
+                    break
+
+                # Safety timeout check (simulation clock)
+                elapsed_clk = (self.nav.get_clock().now() - start_clk).nanoseconds / 1e9
+                if elapsed_clk > timeout_sec:
+                    print(f"[Undock Warning] Safety timeout reached ({timeout_sec:.1f}s). Traveled: {dist_traveled*100:.1f}cm.")
+                    break
+
                 self.cmd_vel_pub.publish(msg)
+                time.sleep(0.02)
+
+            # Active braking to prevent inertia drift
+            stop_msg = Twist()
+            for _ in range(5):
+                self.cmd_vel_pub.publish(stop_msg)
                 time.sleep(0.05)
-            # Stop
-            self.cmd_vel_pub.publish(Twist())
-            time.sleep(0.5)
+
         finally:
+            self.nav.destroy_subscription(odom_sub)
             if self.enable_sound:
                 stop_reverse_melody()
-        print("[Undock] Cleared obstacle successfully.")
+
+        print("[Undock] Cleared obstacle successfully with precise distance.")
 
 
 def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False,

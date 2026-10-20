@@ -73,45 +73,12 @@ DOCKING_CHIME_NOTES: List[Tuple[float, float]] = [
     (1046.50, 0.35), # C6 (높은 도, 페이드아웃)
 ]
 
-# 2. '엘리제를 위하여' (Für Elise) - Industrial AGV reverse melody motif
-FUR_ELISE_NOTES: List[Tuple[float, float]] = [
-    # Phrase 1
-    (659.25, 0.20),  # E5
-    (622.25, 0.20),  # D#5
-    (659.25, 0.20),  # E5
-    (622.25, 0.20),  # D#5
-    (659.25, 0.20),  # E5
-    (493.88, 0.20),  # B4
-    (587.33, 0.20),  # D5
-    (523.25, 0.20),  # C5
-    (440.00, 0.45),  # A4
-    (0.0,    0.10),  # Rest
-
-    # Phrase 2
-    (261.63, 0.20),  # C4
-    (329.63, 0.20),  # E4
-    (440.00, 0.20),  # A4
-    (493.88, 0.45),  # B4
-    (0.0,    0.10),  # Rest
-
-    # Phrase 3
-    (329.63, 0.20),  # E4
-    (415.30, 0.20),  # G#4
-    (493.88, 0.20),  # B4
-    (523.25, 0.45),  # C5
-    (0.0,    0.10),  # Rest
-
-    # Phrase 4 (Return motif)
-    (659.25, 0.20),  # E5
-    (622.25, 0.20),  # D#5
-    (659.25, 0.20),  # E5
-    (622.25, 0.20),  # D#5
-    (659.25, 0.20),  # E5
-    (493.88, 0.20),  # B4
-    (587.33, 0.20),  # D5
-    (523.25, 0.20),  # C5
-    (440.00, 0.60),  # A4
+# 2. 후진 경고음: 표준 산업용 AGV/지게차 단일 비프음 ('삐~ 삐~', 1000Hz)
+REVERSE_BEEP_NOTES: List[Tuple[float, float]] = [
+    (1000.0, 0.25),  # 1000Hz 비프 250ms
+    (0.0,    0.20),  # 무음 200ms 휴지기
 ]
+FUR_ELISE_NOTES = REVERSE_BEEP_NOTES  # 하위 호환성 유지
 
 
 class SoundManager:
@@ -122,7 +89,8 @@ class SoundManager:
             int(os.environ["PINKY_PIEZO_PIN"]) if "PINKY_PIEZO_PIN" in os.environ else None
         )
         self.docking_wav = os.path.join(CACHE_DIR, "docking_complete_chime.wav")
-        self.fur_elise_wav = os.path.join(CACHE_DIR, "fur_elise_reverse.wav")
+        self.reverse_beep_wav = os.path.join(CACHE_DIR, "reverse_beep.wav")
+        self.fur_elise_wav = self.reverse_beep_wav
         self._reverse_proc: Optional[subprocess.Popen] = None
         self._reverse_thread: Optional[threading.Thread] = None
         self._reverse_stop_event = threading.Event()
@@ -143,8 +111,8 @@ class SoundManager:
         try:
             if not os.path.exists(self.docking_wav):
                 _generate_wav_file(DOCKING_CHIME_NOTES, self.docking_wav, volume=0.55)
-            if not os.path.exists(self.fur_elise_wav):
-                _generate_wav_file(FUR_ELISE_NOTES, self.fur_elise_wav, volume=0.50)
+            # Regenerate beep wav to apply clean single-tone beep
+            _generate_wav_file(REVERSE_BEEP_NOTES, self.reverse_beep_wav, volume=0.50)
         except Exception as e:
             print(f"[SoundManager Warning] Could not pre-generate audio files: {e}")
 
@@ -226,15 +194,15 @@ class SoundManager:
 
     def start_reverse_melody(self):
         """
-        Start playing 'Für Elise' in loop while robot is reversing during undock backup.
+        Start playing single-tone beep-beep ('삐~ 삐~') in loop while robot is reversing during undock backup.
         """
-        print("🎵 [Sound] 🎶 Playing 'Für Elise' (엘리제를 위하여) Undocking Reverse Chime...")
+        print("🔊 [Sound] 삐~ 삐~ Undocking Reverse Beep Active...")
         self.stop_reverse_melody()
         self._reverse_stop_event.clear()
 
         def _loop_playback():
             while not self._reverse_stop_event.is_set():
-                proc = self._play_file_subprocess(self.fur_elise_wav)
+                proc = self._play_file_subprocess(self.reverse_beep_wav)
                 self._reverse_proc = proc
                 if proc:
                     while proc.poll() is None:
