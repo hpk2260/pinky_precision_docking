@@ -1,0 +1,150 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <model name="omx_ai">
+    <static>true</static>
+    <link name="link">
+      <!-- Mounting Workstation Base Stand -->
+      <collision name="stand_collision">
+        <pose>0.02 0 0.025 0 0 0</pose>
+        <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
+      </collision>
+      <visual name="stand_visual">
+        <pose>0.02 0 0.025 0 0 0</pose>
+        <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
+        <material>
+          <ambient>0.2 0.22 0.25 1</ambient>
+          <diffuse>0.25 0.28 0.32 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 01 Base -->
+      <visual name="base_visual">
+        <pose>0.00000 0.00000 0.05000 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_01_base.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.18 1</ambient>
+          <diffuse>0.20 0.20 0.24 1</diffuse>
+          <specular>0.4 0.4 0.4 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 02 Base Tilt (White/Silver Frame) -->
+      <visual name="link1_visual">
+        <pose>-0.01125 0.00000 0.08400 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_02_base_tilt_Revised.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.85 0.85 0.88 1</ambient>
+          <diffuse>0.92 0.92 0.95 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 03 Middle Vertical (White/Silver Frame) -->
+      <visual name="link2_visual">
+        <pose>-0.01125 0.00000 0.14750 0 -0.45000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_03_middle_verticle.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.85 0.85 0.88 1</ambient>
+          <diffuse>0.92 0.92 0.95 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 04 Middle Horizontal (White/Silver Frame) -->
+      <visual name="link3_visual">
+        <pose>-0.02310 0.00000 0.26744 0 0.25000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_04_middle_horizontal.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.85 0.85 0.88 1</ambient>
+          <diffuse>0.92 0.92 0.95 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 05 Tip -->
+      <visual name="link4_visual">
+        <pose>0.13387 0.00000 0.22736 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_05_tip.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.24 1</ambient>
+          <diffuse>0.25 0.25 0.30 1</diffuse>
+          <specular>0.4 0.4 0.4 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 06 Pan -->
+      <visual name="link5_visual">
+        <pose>0.16257 0.00000 0.22736 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_06_pan_Revised.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.85 0.85 0.88 1</ambient>
+          <diffuse>0.92 0.92 0.95 1</diffuse>
+          <specular>0.4 0.4 0.4 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 07 Gripper Motorized -->
+      <visual name="gripper_motorized_visual">
+        <pose>0.19207 0.00750 0.22736 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_07_gripper_motorized.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.18 1</ambient>
+          <diffuse>0.22 0.22 0.26 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+
+      <!-- Follower 08 Gripper Gear -->
+      <visual name="gripper_gear_visual">
+        <pose>0.19207 -0.01080 0.22736 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_08_gripper_gear.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.18 1</ambient>
+          <diffuse>0.22 0.22 0.26 1</diffuse>
+          <specular>0.5 0.5 0.5 1</specular>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

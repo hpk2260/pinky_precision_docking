@@ -26,45 +26,84 @@
     <light type="directional" name="sun">
       <cast_shadows>false</cast_shadows>
       <pose>0.6 0.8 5 0 0 0</pose>
-      <diffuse>1 1 1 1</diffuse>
-      <specular>0.2 0.2 0.2 1</specular>
+      <diffuse>0.4 0.4 0.42 1</diffuse>
+      <specular>0.1 0.1 0.1 1</specular>
       <direction>0 0 -1</direction>
     </light>
 
-    <!-- Dedicated Spotlights for High-Contrast ArUco Recognition -->
-    <light type="point" name="shelf1_light">
+    <!-- ========================================== -->
+    <!-- Office Ceiling Lighting (1m Grid at z = 2.5m) -->
+    <!-- ========================================== -->
+    <light type="point" name="office_light_grid_0">
       <cast_shadows>false</cast_shadows>
-      <pose>0.30 1.47 0.80 0 0 0</pose>
-      <diffuse>0.8 0.8 0.8 1</diffuse>
-      <specular>0.1 0.1 0.1 1</specular>
+      <pose>0.10 -0.22 2.50 0 0 0</pose>
+      <diffuse>0.72 0.72 0.75 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
       <attenuation>
-        <range>3.0</range>
-        <linear>0.2</linear>
-        <constant>0.8</constant>
+        <range>6.0</range>
+        <constant>0.6</constant>
+        <linear>0.15</linear>
+        <quadratic>0.03</quadratic>
       </attenuation>
     </light>
-
-    <light type="point" name="shelf2_light">
+    <light type="point" name="office_light_grid_1">
       <cast_shadows>false</cast_shadows>
-      <pose>1.02 1.20 0.80 0 0 0</pose>
-      <diffuse>0.8 0.8 0.8 1</diffuse>
-      <specular>0.1 0.1 0.1 1</specular>
+      <pose>1.10 -0.22 2.50 0 0 0</pose>
+      <diffuse>0.72 0.72 0.75 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
       <attenuation>
-        <range>3.0</range>
-        <linear>0.2</linear>
-        <constant>0.8</constant>
+        <range>6.0</range>
+        <constant>0.6</constant>
+        <linear>0.15</linear>
+        <quadratic>0.03</quadratic>
       </attenuation>
     </light>
-
-    <light type="point" name="packaging_light">
+    <light type="point" name="office_light_grid_2">
       <cast_shadows>false</cast_shadows>
-      <pose>1.00 0.24 0.80 0 0 0</pose>
-      <diffuse>0.8 0.8 0.8 1</diffuse>
-      <specular>0.1 0.1 0.1 1</specular>
+      <pose>0.10 0.78 2.50 0 0 0</pose>
+      <diffuse>0.72 0.72 0.75 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
       <attenuation>
-        <range>3.0</range>
-        <linear>0.2</linear>
-        <constant>0.8</constant>
+        <range>6.0</range>
+        <constant>0.6</constant>
+        <linear>0.15</linear>
+        <quadratic>0.03</quadratic>
+      </attenuation>
+    </light>
+    <light type="point" name="office_light_grid_3">
+      <cast_shadows>false</cast_shadows>
+      <pose>1.10 0.78 2.50 0 0 0</pose>
+      <diffuse>0.72 0.72 0.75 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
+      <attenuation>
+        <range>6.0</range>
+        <constant>0.6</constant>
+        <linear>0.15</linear>
+        <quadratic>0.03</quadratic>
+      </attenuation>
+    </light>
+    <light type="point" name="office_light_grid_4">
+      <cast_shadows>false</cast_shadows>
+      <pose>0.10 1.78 2.50 0 0 0</pose>
+      <diffuse>0.72 0.72 0.75 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
+      <attenuation>
+        <range>6.0</range>
+        <constant>0.6</constant>
+        <linear>0.15</linear>
+        <quadratic>0.03</quadratic>
+      </attenuation>
+    </light>
+    <light type="point" name="office_light_grid_5">
+      <cast_shadows>false</cast_shadows>
+      <pose>1.10 1.78 2.50 0 0 0</pose>
+      <diffuse>0.72 0.72 0.75 1</diffuse>
+      <specular>0.15 0.15 0.15 1</specular>
+      <attenuation>
+        <range>6.0</range>
+        <constant>0.6</constant>
+        <linear>0.15</linear>
+        <quadratic>0.03</quadratic>
       </attenuation>
     </light>
 
@@ -81,6 +120,71 @@
             <ambient>0.8 0.8 0.8 1</ambient>
             <diffuse>0.8 0.8 0.8 1</diffuse>
           </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ========================================== -->
+    <!-- Dark Gray Interior Floor (Bounded by Walls) -->
+    <!-- Inner Area: X in [-0.12, 1.32], Y in [-0.30, 1.86] -->
+    <!-- ========================================== -->
+    <model name="arena_interior_floor">
+      <static>true</static>
+      <pose>0.6000 0.7800 0.0005 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.4400 2.1600 0.0010</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>1.4400 2.1600 0.0010</size></box></geometry>
+          <material>
+            <ambient>0.18 0.18 0.20 1</ambient>
+            <diffuse>0.22 0.23 0.25 1</diffuse>
+            <specular>0.12 0.12 0.12 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Visual Office Ceiling Light Fixtures (2.5m Height, 1m Spacing) -->
+    <model name="office_ceiling_fixtures">
+      <static>true</static>
+      <link name="link">
+        <!-- Fixture 0 -->
+        <visual name="troffer_0">
+          <pose>0.10 -0.22 2.505 0 0 0</pose>
+          <geometry><box><size>0.30 0.60 0.015</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>0.9 0.9 0.95 1</emissive></material>
+        </visual>
+        <!-- Fixture 1 -->
+        <visual name="troffer_1">
+          <pose>1.10 -0.22 2.505 0 0 0</pose>
+          <geometry><box><size>0.30 0.60 0.015</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>0.9 0.9 0.95 1</emissive></material>
+        </visual>
+        <!-- Fixture 2 -->
+        <visual name="troffer_2">
+          <pose>0.10 0.78 2.505 0 0 0</pose>
+          <geometry><box><size>0.30 0.60 0.015</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>0.9 0.9 0.95 1</emissive></material>
+        </visual>
+        <!-- Fixture 3 -->
+        <visual name="troffer_3">
+          <pose>1.10 0.78 2.505 0 0 0</pose>
+          <geometry><box><size>0.30 0.60 0.015</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>0.9 0.9 0.95 1</emissive></material>
+        </visual>
+        <!-- Fixture 4 -->
+        <visual name="troffer_4">
+          <pose>0.10 1.78 2.505 0 0 0</pose>
+          <geometry><box><size>0.30 0.60 0.015</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>0.9 0.9 0.95 1</emissive></material>
+        </visual>
+        <!-- Fixture 5 -->
+        <visual name="troffer_5">
+          <pose>1.10 1.78 2.505 0 0 0</pose>
+          <geometry><box><size>0.30 0.60 0.015</size></box></geometry>
+          <material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><emissive>0.9 0.9 0.95 1</emissive></material>
         </visual>
       </link>
     </model>
@@ -105,6 +209,7 @@
         </visual>
       </link>
     </model>
+
     <model name="wall_south">
       <static>true</static>
       <pose>0.6000 -0.3200 0.1250 0 0 0</pose>
@@ -122,15 +227,17 @@
         </visual>
       </link>
     </model>
-    <model name="wall_west_lower">
+
+    <!-- Straight Continuous West Wall (Flush from Y=-0.32 to 1.88) -->
+    <model name="wall_west">
       <static>true</static>
-      <pose>-0.1400 0.3800 0.1250 0 0 0</pose>
+      <pose>-0.1400 0.7800 0.1250 0 0 0</pose>
       <link name="link">
         <collision name="collision">
-          <geometry><box><size>0.0400 1.4000 0.2500</size></box></geometry>
+          <geometry><box><size>0.0400 2.2000 0.2500</size></box></geometry>
         </collision>
         <visual name="visual">
-          <geometry><box><size>0.0400 1.4000 0.2500</size></box></geometry>
+          <geometry><box><size>0.0400 2.2000 0.2500</size></box></geometry>
           <material>
             <ambient>0.7 0.72 0.75 1</ambient>
             <diffuse>0.7 0.72 0.75 1</diffuse>
@@ -139,15 +246,17 @@
         </visual>
       </link>
     </model>
-    <model name="wall_shelf1_docking">
+
+    <!-- Straight Continuous East Wall (Flush from Y=-0.32 to 1.88, no notch at packaging) -->
+    <model name="wall_east">
       <static>true</static>
-      <pose>-0.0600 1.4700 0.1250 0 0 0</pose>
+      <pose>1.3400 0.7800 0.1250 0 0 0</pose>
       <link name="link">
         <collision name="collision">
-          <geometry><box><size>0.0400 0.7800 0.2500</size></box></geometry>
+          <geometry><box><size>0.0400 2.2000 0.2500</size></box></geometry>
         </collision>
         <visual name="visual">
-          <geometry><box><size>0.0400 0.7800 0.2500</size></box></geometry>
+          <geometry><box><size>0.0400 2.2000 0.2500</size></box></geometry>
           <material>
             <ambient>0.7 0.72 0.75 1</ambient>
             <diffuse>0.7 0.72 0.75 1</diffuse>
@@ -156,6 +265,8 @@
         </visual>
       </link>
     </model>
+
+    <!-- Interior Dividers -->
     <model name="wall_shelf1_divider">
       <static>true</static>
       <pose>0.1500 1.0800 0.1250 0 0 0</pose>
@@ -173,15 +284,17 @@
         </visual>
       </link>
     </model>
+
+    <!-- Protruding Wall in front of Pinky Parking: Gap Closed to Outer South Wall (Y from -0.30 to +0.36) -->
     <model name="wall_center_pillar">
       <static>true</static>
-      <pose>0.5100 0.0400 0.1250 0 0 0</pose>
+      <pose>0.5100 0.0300 0.1250 0 0 0</pose>
       <link name="link">
         <collision name="collision">
-          <geometry><box><size>0.0400 0.6400 0.2500</size></box></geometry>
+          <geometry><box><size>0.0400 0.6600 0.2500</size></box></geometry>
         </collision>
         <visual name="visual">
-          <geometry><box><size>0.0400 0.6400 0.2500</size></box></geometry>
+          <geometry><box><size>0.0400 0.6600 0.2500</size></box></geometry>
           <material>
             <ambient>0.7 0.72 0.75 1</ambient>
             <diffuse>0.7 0.72 0.75 1</diffuse>
@@ -190,23 +303,7 @@
         </visual>
       </link>
     </model>
-    <model name="wall_east_upper">
-      <static>true</static>
-      <pose>1.3400 1.3600 0.1250 0 0 0</pose>
-      <link name="link">
-        <collision name="collision">
-          <geometry><box><size>0.0400 1.0000 0.2500</size></box></geometry>
-        </collision>
-        <visual name="visual">
-          <geometry><box><size>0.0400 1.0000 0.2500</size></box></geometry>
-          <material>
-            <ambient>0.7 0.72 0.75 1</ambient>
-            <diffuse>0.7 0.72 0.75 1</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
-          </material>
-        </visual>
-      </link>
-    </model>
+
     <model name="wall_shelf2_divider">
       <static>true</static>
       <pose>0.8800 1.1100 0.1250 0 0 0</pose>
@@ -224,46 +321,262 @@
         </visual>
       </link>
     </model>
-    <model name="wall_shelf2_docking">
+
+    <!-- ======================================================== -->
+    <!-- Shelf 1: Costco-Style Industrial Heavy Pallet Rack      -->
+    <!-- (Steel Blue Posts, Safety Orange Beams, 2-Tier Cargo)    -->
+    <!-- ArUco IDs 6, 7, 8 Mount Directly to Front Load Beam      -->
+    <!-- ======================================================== -->
+    <model name="shelf1_costco_rack">
       <static>true</static>
-      <pose>1.1100 0.8600 0.1250 0 0 0</pose>
       <link name="link">
-        <collision name="collision">
-          <geometry><box><size>0.4600 0.0400 0.2500</size></box></geometry>
+        <!-- Main Physical Collision Body -->
+        <collision name="rack_collision">
+          <pose>-0.075 1.470 0.225 0 0 0</pose>
+          <geometry><box><size>0.08 0.74 0.45</size></box></geometry>
         </collision>
-        <visual name="visual">
-          <geometry><box><size>0.4600 0.0400 0.2500</size></box></geometry>
-          <material>
-            <ambient>0.7 0.72 0.75 1</ambient>
-            <diffuse>0.7 0.72 0.75 1</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
-          </material>
+
+        <!-- Upright Steel Posts (Costco Industrial Blue #0d47a1) -->
+        <visual name="post_FL">
+          <pose>-0.042 1.115 0.225 0 0 0</pose>
+          <geometry><box><size>0.025 0.025 0.45</size></box></geometry>
+          <material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material>
+        </visual>
+        <visual name="post_FR">
+          <pose>-0.042 1.825 0.225 0 0 0</pose>
+          <geometry><box><size>0.025 0.025 0.45</size></box></geometry>
+          <material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material>
+        </visual>
+        <visual name="post_RL">
+          <pose>-0.108 1.115 0.225 0 0 0</pose>
+          <geometry><box><size>0.025 0.025 0.45</size></box></geometry>
+          <material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material>
+        </visual>
+        <visual name="post_RR">
+          <pose>-0.108 1.825 0.225 0 0 0</pose>
+          <geometry><box><size>0.025 0.025 0.45</size></box></geometry>
+          <material><ambient>0.05 0.15 0.45 1</ambient><diffuse>0.08 0.25 0.65 1</diffuse><specular>0.3 0.3 0.4 1</specular></material>
+        </visual>
+
+        <!-- Safety Orange Load Beams (Costco Industrial Orange #e65100) -->
+        <!-- Lower Front Beam: Mounting Beam for ArUco IDs 6, 7, 8 -->
+        <visual name="beam_lower_front">
+          <pose>-0.040 1.470 0.068 0 0 0</pose>
+          <geometry><box><size>0.018 0.70 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+        <visual name="beam_lower_rear">
+          <pose>-0.110 1.470 0.068 0 0 0</pose>
+          <geometry><box><size>0.018 0.70 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+        <visual name="beam_lower_cross_L">
+          <pose>-0.075 1.115 0.068 0 0 0</pose>
+          <geometry><box><size>0.06 0.018 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+        <visual name="beam_lower_cross_R">
+          <pose>-0.075 1.825 0.068 0 0 0</pose>
+          <geometry><box><size>0.06 0.018 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+
+        <!-- Upper Load Beams -->
+        <visual name="beam_upper_front">
+          <pose>-0.040 1.470 0.260 0 0 0</pose>
+          <geometry><box><size>0.018 0.70 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+        <visual name="beam_upper_rear">
+          <pose>-0.110 1.470 0.260 0 0 0</pose>
+          <geometry><box><size>0.018 0.70 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+        <visual name="beam_upper_cross_L">
+          <pose>-0.075 1.115 0.260 0 0 0</pose>
+          <geometry><box><size>0.06 0.018 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+        <visual name="beam_upper_cross_R">
+          <pose>-0.075 1.825 0.260 0 0 0</pose>
+          <geometry><box><size>0.06 0.018 0.045</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse><specular>0.4 0.2 0.1 1</specular></material>
+        </visual>
+
+        <!-- Top Tie Beams -->
+        <visual name="beam_top_front">
+          <pose>-0.040 1.470 0.440 0 0 0</pose>
+          <geometry><box><size>0.018 0.70 0.02</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material>
+        </visual>
+        <visual name="beam_top_rear">
+          <pose>-0.110 1.470 0.440 0 0 0</pose>
+          <geometry><box><size>0.018 0.70 0.02</size></box></geometry>
+          <material><ambient>0.6 0.2 0.02 1</ambient><diffuse>0.88 0.32 0.04 1</diffuse></material>
+        </visual>
+
+        <!-- Shelving Decks (Galvanized Steel / Industrial Wire Deck) -->
+        <visual name="deck_tier1">
+          <pose>-0.075 1.470 0.092 0 0 0</pose>
+          <geometry><box><size>0.065 0.68 0.008</size></box></geometry>
+          <material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+        <visual name="deck_tier2">
+          <pose>-0.075 1.470 0.284 0 0 0</pose>
+          <geometry><box><size>0.065 0.68 0.008</size></box></geometry>
+          <material><ambient>0.65 0.65 0.68 1</ambient><diffuse>0.75 0.75 0.78 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+
+        <!-- Stored Cargo Goods & Inventory Cartons -->
+        <!-- Tier 1 Warehouse Boxes -->
+        <visual name="cargo_box_1">
+          <pose>-0.075 1.250 0.165 0 0 0</pose>
+          <geometry><box><size>0.06 0.18 0.135</size></box></geometry>
+          <material><ambient>0.55 0.40 0.25 1</ambient><diffuse>0.65 0.48 0.32 1</diffuse></material>
+        </visual>
+        <visual name="cargo_box_2">
+          <pose>-0.075 1.470 0.165 0 0 0</pose>
+          <geometry><box><size>0.06 0.18 0.135</size></box></geometry>
+          <material><ambient>0.50 0.36 0.22 1</ambient><diffuse>0.60 0.44 0.28 1</diffuse></material>
+        </visual>
+        <visual name="cargo_box_3">
+          <pose>-0.075 1.690 0.165 0 0 0</pose>
+          <geometry><box><size>0.06 0.18 0.135</size></box></geometry>
+          <material><ambient>0.15 0.28 0.48 1</ambient><diffuse>0.20 0.35 0.58 1</diffuse></material>
+        </visual>
+        <!-- Tier 2 Warehouse Boxes -->
+        <visual name="cargo_box_4">
+          <pose>-0.075 1.320 0.355 0 0 0</pose>
+          <geometry><box><size>0.06 0.24 0.135</size></box></geometry>
+          <material><ambient>0.75 0.75 0.75 1</ambient><diffuse>0.88 0.88 0.88 1</diffuse></material>
+        </visual>
+        <visual name="cargo_box_5">
+          <pose>-0.075 1.620 0.355 0 0 0</pose>
+          <geometry><box><size>0.06 0.24 0.135</size></box></geometry>
+          <material><ambient>0.55 0.40 0.25 1</ambient><diffuse>0.65 0.48 0.32 1</diffuse></material>
         </visual>
       </link>
     </model>
-    <model name="wall_east_middle">
+
+    <!-- ======================================================== -->
+    <!-- Shelf 2: Supermarket Refrigerated Showcase / Cooler      -->
+    <!-- (Dark Stainless Steel Case, Glass Shelves, Dairy Goods)  -->
+    <!-- ArUco IDs 4, 3 Mount Directly to Front Price Rail        -->
+    <!-- ======================================================== -->
+    <model name="shelf2_supermarket_cooler">
       <static>true</static>
-      <pose>1.3400 0.6700 0.1250 0 0 0</pose>
       <link name="link">
-        <collision name="collision">
-          <geometry><box><size>0.0400 0.3800 0.2500</size></box></geometry>
+        <!-- Physical Collision Body -->
+        <collision name="cooler_collision">
+          <pose>1.1100 0.8500 0.2250 0 0 0</pose>
+          <geometry><box><size>0.4400 0.0600 0.4500</size></box></geometry>
         </collision>
-        <visual name="visual">
-          <geometry><box><size>0.0400 0.3800 0.2500</size></box></geometry>
-          <material>
-            <ambient>0.7 0.72 0.75 1</ambient>
-            <diffuse>0.7 0.72 0.75 1</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
-          </material>
+
+        <!-- Dark Stainless Steel Cabinet Exterior (#263238) -->
+        <visual name="cabinet_back">
+          <pose>1.1100 0.8250 0.2250 0 0 0</pose>
+          <geometry><box><size>0.4200 0.0150 0.4500</size></box></geometry>
+          <material><ambient>0.12 0.14 0.16 1</ambient><diffuse>0.16 0.18 0.22 1</diffuse><specular>0.3 0.3 0.3 1</specular></material>
+        </visual>
+        <visual name="side_left">
+          <pose>0.8950 0.8500 0.2250 0 0 0</pose>
+          <geometry><box><size>0.0200 0.0600 0.4500</size></box></geometry>
+          <material><ambient>0.12 0.14 0.16 1</ambient><diffuse>0.16 0.18 0.22 1</diffuse><specular>0.3 0.3 0.3 1</specular></material>
+        </visual>
+        <visual name="side_right">
+          <pose>1.3250 0.8500 0.2250 0 0 0</pose>
+          <geometry><box><size>0.0200 0.0600 0.4500</size></box></geometry>
+          <material><ambient>0.12 0.14 0.16 1</ambient><diffuse>0.16 0.18 0.22 1</diffuse><specular>0.3 0.3 0.3 1</specular></material>
+        </visual>
+        <visual name="base_kickplate">
+          <pose>1.1100 0.8500 0.0350 0 0 0</pose>
+          <geometry><box><size>0.4400 0.0650 0.0700</size></box></geometry>
+          <material><ambient>0.10 0.10 0.12 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
+        </visual>
+        <visual name="top_canopy">
+          <pose>1.1100 0.8500 0.4250 0 0 0</pose>
+          <geometry><box><size>0.4400 0.0650 0.0500</size></box></geometry>
+          <material><ambient>0.15 0.18 0.22 1</ambient><diffuse>0.20 0.24 0.28 1</diffuse><specular>0.3 0.3 0.3 1</specular></material>
+        </visual>
+        <!-- Illuminated Cooler Header Sign -->
+        <visual name="top_light_trim">
+          <pose>1.1100 0.8800 0.4250 0 0 0</pose>
+          <geometry><box><size>0.4000 0.0050 0.0300</size></box></geometry>
+          <material><ambient>0.7 0.9 1 1</ambient><diffuse>0.85 0.95 1 1</diffuse><emissive>0.7 0.9 1 1</emissive></material>
+        </visual>
+
+        <!-- White Insulated Showcase Interior Display -->
+        <visual name="interior_lining">
+          <pose>1.1100 0.8350 0.2250 0 0 0</pose>
+          <geometry><box><size>0.4100 0.0050 0.3400</size></box></geometry>
+          <material><ambient>0.85 0.88 0.90 1</ambient><diffuse>0.92 0.94 0.96 1</diffuse></material>
+        </visual>
+
+        <!-- Front Display Shelf & Price Rail (Mounting Rail for ArUco IDs 4, 3) -->
+        <visual name="shelf_lower_rail">
+          <pose>1.1100 0.8800 0.0680 0 0 0</pose>
+          <geometry><box><size>0.4200 0.0040 0.0450</size></box></geometry>
+          <material><ambient>0.3 0.3 0.35 1</ambient><diffuse>0.4 0.4 0.45 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+        <!-- Glass Display Shelves -->
+        <visual name="shelf_glass_mid">
+          <pose>1.1100 0.8500 0.2000 0 0 0</pose>
+          <geometry><box><size>0.4000 0.0450 0.0080</size></box></geometry>
+          <material><ambient>0.7 0.85 0.9 0.8</ambient><diffuse>0.75 0.90 0.95 0.8</diffuse><specular>0.6 0.6 0.6 1</specular></material>
+        </visual>
+        <visual name="shelf_glass_top">
+          <pose>1.1100 0.8500 0.3200 0 0 0</pose>
+          <geometry><box><size>0.4000 0.0450 0.0080</size></box></geometry>
+          <material><ambient>0.7 0.85 0.9 0.8</ambient><diffuse>0.75 0.90 0.95 0.8</diffuse><specular>0.6 0.6 0.6 1</specular></material>
+        </visual>
+
+        <!-- Refrigerated Dairy & Beverage Goods Display -->
+        <!-- Lower Shelf: Fresh Milk & Dairy Cartons -->
+        <visual name="dairy_milk_blue">
+          <pose>0.9700 0.8500 0.1200 0 0 0</pose>
+          <geometry><box><size>0.0800 0.0380 0.0950</size></box></geometry>
+          <material><ambient>0.10 0.25 0.65 1</ambient><diffuse>0.15 0.35 0.75 1</diffuse></material>
+        </visual>
+        <visual name="dairy_milk_white">
+          <pose>1.1100 0.8500 0.1200 0 0 0</pose>
+          <geometry><box><size>0.1000 0.0380 0.0950</size></box></geometry>
+          <material><ambient>0.80 0.80 0.82 1</ambient><diffuse>0.92 0.92 0.94 1</diffuse></material>
+        </visual>
+        <visual name="dairy_fresh_green">
+          <pose>1.2500 0.8500 0.1200 0 0 0</pose>
+          <geometry><box><size>0.0800 0.0380 0.0950</size></box></geometry>
+          <material><ambient>0.12 0.45 0.20 1</ambient><diffuse>0.18 0.55 0.28 1</diffuse></material>
+        </visual>
+        <!-- Mid Shelf: Chilled Beverage Bottles/Cans -->
+        <visual name="drink_cola_red">
+          <pose>1.0100 0.8500 0.2450 0 0 0</pose>
+          <geometry><box><size>0.1200 0.0350 0.0750</size></box></geometry>
+          <material><ambient>0.60 0.10 0.10 1</ambient><diffuse>0.80 0.15 0.15 1</diffuse></material>
+        </visual>
+        <visual name="drink_juice_orange">
+          <pose>1.2100 0.8500 0.2450 0 0 0</pose>
+          <geometry><box><size>0.1400 0.0350 0.0750</size></box></geometry>
+          <material><ambient>0.70 0.40 0.05 1</ambient><diffuse>0.95 0.55 0.10 1</diffuse></material>
+        </visual>
+        <!-- Top Shelf: Chilled Yogurt / Cheese Multi-Packs -->
+        <visual name="yogurt_packs_cyan">
+          <pose>1.1100 0.8500 0.3550 0 0 0</pose>
+          <geometry><box><size>0.2800 0.0350 0.0550</size></box></geometry>
+          <material><ambient>0.25 0.60 0.75 1</ambient><diffuse>0.35 0.75 0.88 1</diffuse></material>
         </visual>
       </link>
     </model>
-    <!-- ROBOTIS OpenMANIPULATOR-X (North Packaging Workstation) -->
+
+    <!-- ======================================================== -->
+    <!-- ROBOTIS OMX-AI Manipulators (Packaging Workstation)     -->
+    <!-- Authentic Follower (omx_f) Model (Motors + Gripper)     -->
+    <!-- Facing West into Arena Docking Spot                      -->
+    <!-- ======================================================== -->
     <model name="omx_manipulator_top">
       <static>true</static>
       <pose>1.2000 0.4400 0.0000 0 0 3.1416</pose>
       <link name="link">
-        <!-- Mounting Workstation Pedestal -->
+        <!-- Mounting Workstation Base Stand -->
         <collision name="stand_collision">
           <pose>0.02 0 0.025 0 0 0</pose>
           <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
@@ -277,126 +590,103 @@
             <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
-
-        <!-- Link 1 (Base Actuator) -->
-        <visual name="link1_visual">
+        <!-- Follower 01 Base -->
+        <visual name="base_visual">
           <pose>0.00000 0.00000 0.05000 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link1.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_01_base.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.20 0.20 0.20 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.15 0.15 0.18 1</ambient><diffuse>0.20 0.20 0.24 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
         </visual>
-
-        <!-- Link 2 (Shoulder Frame - Signature White) -->
+        <!-- Follower 02 Base Tilt (White/Silver Frame) -->
+        <visual name="link1_visual">
+          <pose>-0.01125 0.00000 0.08400 0 0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_02_base_tilt_Revised.stl</uri>
+            </mesh>
+          </geometry>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+        <!-- Follower 03 Middle Vertical (White/Silver Frame) -->
         <visual name="link2_visual">
-          <pose>0.01200 0.00000 0.05000 0 0 0</pose>
+          <pose>-0.01125 0.00000 0.14750 0 -0.45000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link2.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_03_middle_verticle.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.85 0.85 0.88 1</ambient>
-            <diffuse>0.92 0.92 0.95 1</diffuse>
-            <specular>0.4 0.4 0.4 1</specular>
-          </material>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
-
-        <!-- Link 3 (Upper Arm Frame - Signature White) -->
+        <!-- Follower 04 Middle Horizontal (White/Silver Frame) -->
         <visual name="link3_visual">
-          <pose>0.01200 0.00000 0.10950 0 -0.40000 0</pose>
+          <pose>-0.02310 0.00000 0.26744 0 0.25000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link3.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_04_middle_horizontal.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.85 0.85 0.88 1</ambient>
-            <diffuse>0.92 0.92 0.95 1</diffuse>
-            <specular>0.4 0.4 0.4 1</specular>
-          </material>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
-
-        <!-- Link 4 (Forearm Frame - Signature White) -->
+        <!-- Follower 05 Tip -->
         <visual name="link4_visual">
-          <pose>-0.01574 0.00000 0.23674 0 0.25000 0</pose>
+          <pose>0.13387 0.00000 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link4.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_05_tip.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.85 0.85 0.88 1</ambient>
-            <diffuse>0.92 0.92 0.95 1</diffuse>
-            <specular>0.4 0.4 0.4 1</specular>
-          </material>
+          <material><ambient>0.2 0.2 0.24 1</ambient><diffuse>0.25 0.25 0.30 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
         </visual>
-
-        <!-- Link 5 (Wrist Actuator - Dark Charcoal) -->
+        <!-- Follower 06 Pan -->
         <visual name="link5_visual">
-          <pose>0.10441 0.00000 0.20606 0 0.00000 0</pose>
+          <pose>0.16257 0.00000 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link5.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_06_pan_Revised.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.20 0.20 0.20 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
         </visual>
-
-        <!-- Gripper Left Finger (ROBOTIS Red) -->
-        <visual name="gripper_left_visual">
-          <pose>0.18611 -0.01800 0.20606 0 0.00000 0</pose>
+        <!-- Follower 07 Gripper Motorized -->
+        <visual name="gripper_motorized_visual">
+          <pose>0.19207 0.00750 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_left_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_07_gripper_motorized.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.70 0.12 0.12 1</ambient>
-            <diffuse>0.88 0.15 0.15 1</diffuse>
-            <specular>0.5 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.15 0.15 0.18 1</ambient><diffuse>0.22 0.22 0.26 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
-
-        <!-- Gripper Right Finger (ROBOTIS Red) -->
-        <visual name="gripper_right_visual">
-          <pose>0.18611 0.01800 0.20606 0 0.00000 0</pose>
+        <!-- Follower 08 Gripper Gear -->
+        <visual name="gripper_gear_visual">
+          <pose>0.19207 -0.01080 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_right_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_08_gripper_gear.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.70 0.12 0.12 1</ambient>
-            <diffuse>0.88 0.15 0.15 1</diffuse>
-            <specular>0.5 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.15 0.15 0.18 1</ambient><diffuse>0.22 0.22 0.26 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
       </link>
     </model>
-    <!-- ROBOTIS OpenMANIPULATOR-X (South Packaging Workstation) -->
+
+    <!-- ROBOTIS OMX-AI (South Packaging Workstation) -->
     <model name="omx_manipulator_bottom">
       <static>true</static>
       <pose>1.2000 0.0600 0.0000 0 0 3.1416</pose>
       <link name="link">
-        <!-- Mounting Workstation Pedestal -->
+        <!-- Mounting Workstation Base Stand -->
         <collision name="stand_collision">
           <pose>0.02 0 0.025 0 0 0</pose>
           <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
@@ -410,151 +700,93 @@
             <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
-
-        <!-- Link 1 (Base Actuator) -->
-        <visual name="link1_visual">
+        <!-- Follower 01 Base -->
+        <visual name="base_visual">
           <pose>0.00000 0.00000 0.05000 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link1.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_01_base.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.20 0.20 0.20 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.15 0.15 0.18 1</ambient><diffuse>0.20 0.20 0.24 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
         </visual>
-
-        <!-- Link 2 (Shoulder Frame - Signature White) -->
+        <!-- Follower 02 Base Tilt (White/Silver Frame) -->
+        <visual name="link1_visual">
+          <pose>-0.01125 0.00000 0.08400 0 0 0</pose>
+          <geometry>
+            <mesh>
+              <scale>0.001 0.001 0.001</scale>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_02_base_tilt_Revised.stl</uri>
+            </mesh>
+          </geometry>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
+        </visual>
+        <!-- Follower 03 Middle Vertical (White/Silver Frame) -->
         <visual name="link2_visual">
-          <pose>0.01200 0.00000 0.05000 0 0 0</pose>
+          <pose>-0.01125 0.00000 0.14750 0 -0.45000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link2.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_03_middle_verticle.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.85 0.85 0.88 1</ambient>
-            <diffuse>0.92 0.92 0.95 1</diffuse>
-            <specular>0.4 0.4 0.4 1</specular>
-          </material>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
-
-        <!-- Link 3 (Upper Arm Frame - Signature White) -->
+        <!-- Follower 04 Middle Horizontal (White/Silver Frame) -->
         <visual name="link3_visual">
-          <pose>0.01200 0.00000 0.10950 0 -0.40000 0</pose>
+          <pose>-0.02310 0.00000 0.26744 0 0.25000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link3.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_04_middle_horizontal.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.85 0.85 0.88 1</ambient>
-            <diffuse>0.92 0.92 0.95 1</diffuse>
-            <specular>0.4 0.4 0.4 1</specular>
-          </material>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
-
-        <!-- Link 4 (Forearm Frame - Signature White) -->
+        <!-- Follower 05 Tip -->
         <visual name="link4_visual">
-          <pose>-0.01574 0.00000 0.23674 0 0.25000 0</pose>
+          <pose>0.13387 0.00000 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link4.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_05_tip.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.85 0.85 0.88 1</ambient>
-            <diffuse>0.92 0.92 0.95 1</diffuse>
-            <specular>0.4 0.4 0.4 1</specular>
-          </material>
+          <material><ambient>0.2 0.2 0.24 1</ambient><diffuse>0.25 0.25 0.30 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
         </visual>
-
-        <!-- Link 5 (Wrist Actuator - Dark Charcoal) -->
+        <!-- Follower 06 Pan -->
         <visual name="link5_visual">
-          <pose>0.10441 0.00000 0.20606 0 0.00000 0</pose>
+          <pose>0.16257 0.00000 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link5.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_06_pan_Revised.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.20 0.20 0.20 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.85 0.85 0.88 1</ambient><diffuse>0.92 0.92 0.95 1</diffuse><specular>0.4 0.4 0.4 1</specular></material>
         </visual>
-
-        <!-- Gripper Left Finger (ROBOTIS Red) -->
-        <visual name="gripper_left_visual">
-          <pose>0.18611 -0.01800 0.20606 0 0.00000 0</pose>
+        <!-- Follower 07 Gripper Motorized -->
+        <visual name="gripper_motorized_visual">
+          <pose>0.19207 0.00750 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_left_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_07_gripper_motorized.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.70 0.12 0.12 1</ambient>
-            <diffuse>0.88 0.15 0.15 1</diffuse>
-            <specular>0.5 0.3 0.3 1</specular>
-          </material>
+          <material><ambient>0.15 0.15 0.18 1</ambient><diffuse>0.22 0.22 0.26 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
-
-        <!-- Gripper Right Finger (ROBOTIS Red) -->
-        <visual name="gripper_right_visual">
-          <pose>0.18611 0.01800 0.20606 0 0.00000 0</pose>
+        <!-- Follower 08 Gripper Gear -->
+        <visual name="gripper_gear_visual">
+          <pose>0.19207 -0.01080 0.22736 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_right_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/omx_ai/meshes/follower_08_gripper_gear.stl</uri>
             </mesh>
           </geometry>
-          <material>
-            <ambient>0.70 0.12 0.12 1</ambient>
-            <diffuse>0.88 0.15 0.15 1</diffuse>
-            <specular>0.5 0.3 0.3 1</specular>
-          </material>
-        </visual>
-      </link>
-    </model>
-    <model name="wall_packaging_docking">
-      <static>true</static>
-      <pose>1.3200 0.2700 0.1250 0 0 0</pose>
-      <link name="link">
-        <collision name="collision">
-          <geometry><box><size>0.0400 0.4200 0.2500</size></box></geometry>
-        </collision>
-        <visual name="visual">
-          <geometry><box><size>0.0400 0.4200 0.2500</size></box></geometry>
-          <material>
-            <ambient>0.7 0.72 0.75 1</ambient>
-            <diffuse>0.7 0.72 0.75 1</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
-          </material>
-        </visual>
-      </link>
-    </model>
-    <model name="wall_east_lower">
-      <static>true</static>
-      <pose>1.3400 -0.1300 0.1250 0 0 0</pose>
-      <link name="link">
-        <collision name="collision">
-          <geometry><box><size>0.0400 0.3800 0.2500</size></box></geometry>
-        </collision>
-        <visual name="visual">
-          <geometry><box><size>0.0400 0.3800 0.2500</size></box></geometry>
-          <material>
-            <ambient>0.7 0.72 0.75 1</ambient>
-            <diffuse>0.7 0.72 0.75 1</diffuse>
-            <specular>0.1 0.1 0.1 1</specular>
-          </material>
+          <material><ambient>0.15 0.15 0.18 1</ambient><diffuse>0.22 0.22 0.26 1</diffuse><specular>0.5 0.5 0.5 1</specular></material>
         </visual>
       </link>
     </model>
@@ -2837,7 +3069,7 @@
     <!-- ArUco Marker DICT_5X5_250 ID 5 -->
     <model name="aruco_5x5_id5">
       <static>true</static>
-      <pose>1.2990 0.2430 0.0680 0.0000 0.0000 0.0000</pose>
+      <pose>1.3190 0.2430 0.0680 0.0000 0.0000 0.0000</pose>
       <link name="link">
         <visual name="white_bg">
           <pose>0 0 0 0 0 0</pose>
