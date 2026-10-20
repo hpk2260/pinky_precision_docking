@@ -13,8 +13,11 @@ Scenario Sequence:
 """
 
 import argparse
+import json
 import math
 import subprocess
+import sys
+import threading
 import time
 from typing import List, Tuple
 
@@ -72,6 +75,20 @@ class ArenaMissionController:
         self.target_id_pub = self.nav.create_publisher(Int32, '/docking/target_marker_id', 10)
         self.buzzer_cmd_pub = self.nav.create_publisher(String, '/pinky/buzzer/command', 10)
         self.start_dock_cli = self.nav.create_client(Trigger, '/docking/start')
+
+        # Inter-robot external manipulator task integration
+        self.task_trigger_pub = self.nav.create_publisher(String, '/pinky/station_task/trigger', 10)
+        self.task_complete_sub = self.nav.create_subscription(
+            String, '/pinky/station_task/complete', self._station_task_complete_cb, 10
+        )
+        self.external_task_completed = False
+        self.external_task_msg = ""
+
+    def _station_task_complete_cb(self, msg: String):
+        data = msg.data.strip()
+        if data:
+            self.external_task_completed = True
+            self.external_task_msg = data
 
     def _trigger_buzzer(self, command: str):
         """Send sound command to real Pinky Pro hardware buzzer node over ROS 2."""
@@ -271,9 +288,114 @@ class ArenaMissionController:
 
         print("[Undock] Cleared obstacle successfully with precise distance.")
 
+    def wait_for_station_task(
+        self,
+        station_id: str,
+        station_name: str,
+        robot_name: str,
+        task_type: str,
+        auto_mode: bool = False,
+        auto_duration: float = 3.0
+    ) -> bool:
+        """
+        Manage external task execution between docking and undocking.
+        Triggers task start over ROS topic '/pinky/station_task/trigger' for external manipulators
+        (Doosan collaborative robot, OpenMANIPULATOR-X), and waits for completion either via:
+          1) Interactive terminal input ([Enter] or 'done')
+          2) ROS topic '/pinky/station_task/complete' (sent by external robot arm node)
+          3) Automated timer (if auto_mode=True)
+        """
+        print("\n" + "="*72)
+        print("  🤖 [STATION TASK] External Manipulator Task Execution")
+        print("="*72)
+        print(f"  • Station:      {station_name} (ID: {station_id})")
+        print(f"  • Manipulator:  {robot_name}")
+        print(f"  • Task:         {task_type}")
+        print(f"  • ROS Trigger:  Published START to '/pinky/station_task/trigger'")
+        print("="*72)
+
+        # 1. Publish task START trigger for external robot arm
+        trigger_payload = {
+            "station_id": station_id,
+            "station_name": station_name,
+            "robot": robot_name,
+            "task": task_type,
+            "action": "START",
+            "timestamp": time.time()
+        }
+        start_msg = String()
+        start_msg.data = json.dumps(trigger_payload)
+        for _ in range(3):
+            self.task_trigger_pub.publish(start_msg)
+            time.sleep(0.01)
+
+        if self.enable_sound:
+            self._trigger_buzzer('alert')
+
+        self.external_task_completed = False
+        self.external_task_msg = ""
+        task_start_t = time.time()
+
+        if auto_mode:
+            print(f"\n[Task Auto-Mode] Simulating task duration ({auto_duration:.1f}s)...")
+            while (time.time() - task_start_t) < auto_duration and rclpy.ok():
+                rclpy.spin_once(self.nav, timeout_sec=0.1)
+            print(f"  [Task Auto-Mode] Simulated task completed ({auto_duration:.1f}s).")
+        else:
+            print(f"\n👉 [Action Required] Please perform or verify the task.")
+            print(f"   • To complete via terminal: Press [Enter] or type 'done'")
+            print(f"   • To complete via ROS 2:    ros2 topic pub --once /pinky/station_task/complete std_msgs/msg/String \"data: 'done'\"")
+            print(f"\n   Waiting for task completion >> ", end='', flush=True)
+
+            user_input_received = False
+            user_input_val = ""
+
+            def _read_stdin():
+                nonlocal user_input_received, user_input_val
+                try:
+                    user_input_val = sys.stdin.readline()
+                    user_input_received = True
+                except Exception:
+                    user_input_received = True
+
+            input_thread = threading.Thread(target=_read_stdin, daemon=True)
+            input_thread.start()
+
+            while not user_input_received and not self.external_task_completed and rclpy.ok():
+                rclpy.spin_once(self.nav, timeout_sec=0.1)
+
+            elapsed = time.time() - task_start_t
+            if self.external_task_completed:
+                print(f"\n✅ [Task Complete] Received ROS signal from '{robot_name}' on '/pinky/station_task/complete': '{self.external_task_msg}' (took {elapsed:.1f}s)")
+            else:
+                user_str = user_input_val.strip() if user_input_val else "OK"
+                print(f"\n✅ [Task Complete] Confirmed by user input: '{user_str}' (took {elapsed:.1f}s)")
+
+        # 2. Publish task COMPLETE confirmation
+        complete_payload = {
+            "station_id": station_id,
+            "station_name": station_name,
+            "robot": robot_name,
+            "task": task_type,
+            "action": "COMPLETED",
+            "timestamp": time.time()
+        }
+        done_msg = String()
+        done_msg.data = json.dumps(complete_payload)
+        for _ in range(3):
+            self.task_trigger_pub.publish(done_msg)
+            time.sleep(0.01)
+
+        if self.enable_sound:
+            self._trigger_buzzer('success')
+
+        print(f"[Mission] Station task '{task_type}' finished. Proceeding to Undock.\n")
+        return True
+
 
 def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False,
-                     nav_timeout: float = 180.0, dock_timeout: float = 120.0):
+                     nav_timeout: float = 180.0, dock_timeout: float = 120.0,
+                     auto_task: bool = False, task_delay: float = 3.0):
     rclpy.init()
     ctrl = ArenaMissionController(enable_sound=enable_sound, piezo_pin=piezo_pin, use_sim_time=use_sim_time)
 
@@ -282,11 +404,11 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
     print("="*70)
     print("Mission Plan:")
     print("  1. Home Parking -> Shelf 1 Pre-docking")
-    print("  2. Dock to Shelf 1 (ArUco ID 7)")
+    print("  2. Dock to Shelf 1 (ArUco ID 7) & Doosan Arm Pick & Place")
     print("  3. Undock -> Shelf 2 Pre-docking")
-    print("  4. Dock to Shelf 2 (ArUco ID 4)")
+    print("  4. Dock to Shelf 2 (ArUco ID 4) & Doosan Arm Pick & Place")
     print("  5. Undock -> Packaging Area Pre-docking")
-    print("  6. Dock to Packaging Station (ArUco ID 5)")
+    print("  6. Dock to Packaging Station (ArUco ID 5) & OMX Packaging Task")
     print("  7. Undock -> Return to Home Parking")
     print("="*70 + "\n")
 
@@ -307,7 +429,16 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("------------------------------------------------------------")
         if not ctrl.execute_docking('Shelf 1', MARKER_IDS['shelf1'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 2 failed")
-        time.sleep(2.0)  # Simulating picking duration
+
+        # External Arm Task (Shelf 1)
+        ctrl.wait_for_station_task(
+            station_id='shelf1',
+            station_name='Shelf 1 (선반 1번)',
+            robot_name='두산 로봇팔 (Doosan Collaborative Robot)',
+            task_type='부품 Pick & Place (피킹 및 핑키 적재)',
+            auto_mode=auto_task,
+            auto_duration=task_delay
+        )
 
         # Step 3: Undock -> Shelf 2 Pre-docking
         print("\n------------------------------------------------------------")
@@ -324,7 +455,16 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("------------------------------------------------------------")
         if not ctrl.execute_docking('Shelf 2', MARKER_IDS['shelf2'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 4 failed")
-        time.sleep(2.0)  # Simulating picking duration
+
+        # External Arm Task (Shelf 2)
+        ctrl.wait_for_station_task(
+            station_id='shelf2',
+            station_name='Shelf 2 (선반 2번)',
+            robot_name='두산 로봇팔 (Doosan Collaborative Robot)',
+            task_type='추가 부품 Pick & Place (피킹 및 핑키 적재)',
+            auto_mode=auto_task,
+            auto_duration=task_delay
+        )
 
         # Step 5: Undock -> Packaging Pre-docking
         print("\n------------------------------------------------------------")
@@ -341,7 +481,16 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("------------------------------------------------------------")
         if not ctrl.execute_docking('Packaging Station', MARKER_IDS['packaging'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 6 failed")
-        time.sleep(2.0)  # Simulating packing duration
+
+        # External Arm Task (Packaging)
+        ctrl.wait_for_station_task(
+            station_id='packaging',
+            station_name='Packaging Station (포장 구역)',
+            robot_name='OpenMANIPULATOR-X (OMX 매니퓰레이터)',
+            task_type='적재물 하역 및 자동 포장 (Packaging)',
+            auto_mode=auto_task,
+            auto_duration=task_delay
+        )
 
         # Step 7: Undock -> Return Home
         print("\n------------------------------------------------------------")
@@ -370,6 +519,8 @@ def main():
     parser.add_argument('--sim', action='store_true', help="Enable use_sim_time for Gazebo simulation")
     parser.add_argument('--nav-timeout', type=float, default=180.0, help="Navigation timeout in seconds (default: 180.0)")
     parser.add_argument('--dock-timeout', type=float, default=120.0, help="Docking timeout in seconds (default: 120.0)")
+    parser.add_argument('--auto-task', action='store_true', help="Automatically complete station tasks without interactive terminal prompt (useful for headless testing)")
+    parser.add_argument('--task-delay', type=float, default=3.0, help="Simulated task duration in seconds if --auto-task is enabled (default: 3.0)")
     args = parser.parse_args()
 
     run_full_mission(
@@ -377,7 +528,9 @@ def main():
         piezo_pin=args.buzzer_pin,
         use_sim_time=args.sim,
         nav_timeout=args.nav_timeout,
-        dock_timeout=args.dock_timeout
+        dock_timeout=args.dock_timeout,
+        auto_task=args.auto_task,
+        task_delay=args.task_delay
     )
 
 
