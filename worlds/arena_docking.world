@@ -517,7 +517,7 @@
     <!-- ======================================================== -->
     <model name="omx_manipulator_top">
       <static>true</static>
-      <pose>1.2000 0.4400 0.0000 0 0 3.1416</pose>
+      <pose>1.2600 0.4400 0.0000 0 0 3.1416</pose>
       <link name="link">
         <collision name="base_collision">
           <pose>0.01 0 0.025 0 0 0</pose>
@@ -569,7 +569,7 @@
     <!-- ROBOTIS OMX-AI (South Packaging Workstation) -->
     <model name="omx_manipulator_bottom">
       <static>true</static>
-      <pose>1.2000 0.0600 0.0000 0 0 3.1416</pose>
+      <pose>1.2600 0.0600 0.0000 0 0 3.1416</pose>
       <link name="link">
         <collision name="base_collision">
           <pose>0.01 0 0.025 0 0 0</pose>
