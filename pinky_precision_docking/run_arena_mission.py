@@ -49,7 +49,7 @@ MARKER_IDS = {
 
 
 class ArenaMissionController:
-    def __init__(self, enable_sound: bool = True, piezo_pin: int = None):
+    def __init__(self, enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False):
         self.enable_sound = enable_sound
         if self.enable_sound:
             self.sound_mgr = get_sound_manager()
@@ -58,6 +58,9 @@ class ArenaMissionController:
                 self.sound_mgr._init_gpio_piezo()
 
         self.nav = BasicNavigator()
+        if use_sim_time:
+            self.nav.set_parameters([rclpy.parameter.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)])
+
         self.docking_completed = False
 
         # Subscriber for /docking_completed
@@ -166,9 +169,9 @@ class ArenaMissionController:
         print("[Undock] Cleared obstacle successfully.")
 
 
-def run_full_mission(enable_sound: bool = True, piezo_pin: int = None):
+def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False):
     rclpy.init()
-    ctrl = ArenaMissionController(enable_sound=enable_sound, piezo_pin=piezo_pin)
+    ctrl = ArenaMissionController(enable_sound=enable_sound, piezo_pin=piezo_pin, use_sim_time=use_sim_time)
 
     print("\n" + "="*70)
     print("      🚀 STARTING PINKY PRO ARENA E2E MULTI-STATION MISSION 🚀")
@@ -260,9 +263,10 @@ def main():
     parser.add_argument('--step', default='all', help="Specific step to run: all, 1, 2, 3, 4, 5, 6, 7")
     parser.add_argument('--no-sound', action='store_true', help="Disable sound effects")
     parser.add_argument('--buzzer-pin', type=int, default=None, help="Raspberry Pi GPIO pin for piezo buzzer")
+    parser.add_argument('--sim', action='store_true', help="Enable use_sim_time for Gazebo simulation")
     args = parser.parse_args()
 
-    run_full_mission(enable_sound=not args.no_sound, piezo_pin=args.buzzer_pin)
+    run_full_mission(enable_sound=not args.no_sound, piezo_pin=args.buzzer_pin, use_sim_time=args.sim)
 
 
 if __name__ == '__main__':
