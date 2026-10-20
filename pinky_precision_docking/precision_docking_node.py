@@ -32,7 +32,7 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 from sensor_msgs.msg import CameraInfo, CompressedImage, Image, LaserScan
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int32
 from std_srvs.srv import Trigger
 
 from .controller import ControllerParams, DockingController, Phase
@@ -149,6 +149,7 @@ class PrecisionDockingNode(Node):
         self.info_sub = self.create_subscription(CameraInfo, self.camera_info_topic, self._camera_info_callback, sensor_qos)
         self.scan_sub = self.create_subscription(LaserScan, self.scan_topic, self._scan_callback, sensor_qos)
         self.odom_sub = self.create_subscription(Odometry, '/odom', self._odom_callback, reliable_qos)
+        self.target_id_sub = self.create_subscription(Int32, '/docking/target_marker_id', self._target_marker_id_cb, reliable_qos)
 
         # Services
         self.start_srv = self.create_service(Trigger, self.trigger_service_name, self._handle_start_trigger)
@@ -285,6 +286,10 @@ class PrecisionDockingNode(Node):
         resp.message = 'Docking cancelled'
         self.get_logger().info(resp.message)
         return resp
+
+    def _target_marker_id_cb(self, msg: Int32):
+        self.target_marker_id = int(msg.data)
+        self.get_logger().info(f'[Target ID] Updated target_marker_id to {self.target_marker_id} via topic.')
 
     def _camera_info_callback(self, msg: CameraInfo):
         if not self.detector.intrinsics_from_info and len(msg.k) == 9:
