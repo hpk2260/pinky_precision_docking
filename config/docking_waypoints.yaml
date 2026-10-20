@@ -1,0 +1,29 @@
+# ==============================================================================
+# Pinky Pro Arena Precision Docking & Navigation Waypoints (map frame)
+# Format: [x(m), y(m), yaw(rad)]
+# ==============================================================================
+
+waypoints:
+  # 0. 핑키 초기 출발점 / 주차장 (Home Parking Spot)
+  home_parking: [0.0000, 0.0000, 0.0000]
+
+  # 1. 선반 1번 피킹 도킹 진입 좌표 (Shelf Picking Spot 1)
+  #    - x   : +0.5990 m
+  #    - y   : +1.4700 m
+  #    - yaw : +3.1090 rad (+178.1 deg)
+  shelf_pick_spot1: [0.5990, 1.4700, 3.1090]
+  shelf_pick_spot1_marker_id: 0
+
+  # 2. 선반 2번 피킹 도킹 진입 좌표 (Shelf Picking Spot 2)
+  #    - x   : +1.0210 m
+  #    - y   : +1.5320 m
+  #    - yaw : -1.5680 rad (-89.8 deg)
+  shelf_pick_spot2: [1.0210, 1.5320, -1.5680]
+  shelf_pick_spot2_marker_id: 1
+
+  # 3. 포장구역 도킹 진입 좌표 (Packaging Station / OMX Packer)
+  #    - x   : +0.7240 m
+  #    - y   : +0.2430 m
+  #    - yaw : +0.1070 rad (+6.1 deg)
+  packaging_spot: [0.7240, 0.2430, 0.1070]
+  packaging_marker_id: 2

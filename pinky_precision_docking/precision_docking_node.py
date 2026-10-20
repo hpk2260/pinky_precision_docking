@@ -39,6 +39,7 @@ from .controller import ControllerParams, DockingController, Phase
 from .estimator import DockingEstimate, DockingEstimator, EstimatorParams
 from .geometry import Pose2D, wrap_angle
 from .marker_detector import ArucoMarkerDetector, CameraExtrinsics, MarkerObservation
+from .sound_effects import play_docking_complete
 from .wall_fitting import LidarExtrinsics, WallFitParams, WallFitter, WallObservation
 
 
@@ -267,9 +268,12 @@ class PrecisionDockingNode(Node):
     def _handle_start_trigger(self, req: Trigger.Request, resp: Trigger.Response) -> Trigger.Response:
         now = self._get_time_sec()
         self.docking_logged = False
+        self.estimator.reset()
+        self.last_marker_obs = None
+        self.last_wall_obs = None
         self.controller.start(now)
         resp.success = True
-        resp.message = f'Docking started in {self.controller.phase.value}'
+        resp.message = f'Docking started in {self.controller.phase.value} (Target ID: {self.target_marker_id})'
         self.get_logger().info(resp.message)
         return resp
 
@@ -430,6 +434,10 @@ class PrecisionDockingNode(Node):
 
     def _log_docking_success(self, now: float, est: DockingEstimate, res: dict):
         self.docking_logged = True
+        try:
+            play_docking_complete(blocking=False)
+        except Exception:
+            pass
         elapsed = res.get('elapsed', 0.0)
         d_err = res.get('distance_error', 0.0)
         y_err = res.get('lateral_error', 0.0)
