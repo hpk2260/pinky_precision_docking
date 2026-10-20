@@ -85,9 +85,9 @@ class ArenaMissionController:
             time.sleep(0.01)
         print(f"[Mission] Target ArUco Marker ID set to {marker_id} successfully.")
 
-    def navigate_to(self, waypoint_name: str, x: float, y: float, yaw: float, timeout_sec: float = 60.0) -> bool:
-        """Navigate to waypoint using Nav2 BasicNavigator."""
-        print(f"\n>>> [Nav2] Navigating to '{waypoint_name}': x={x:.3f}m, y={y:.3f}m, yaw={math.degrees(yaw):+.1f} deg...")
+    def navigate_to(self, waypoint_name: str, x: float, y: float, yaw: float, timeout_sec: float = 180.0) -> bool:
+        """Navigate to waypoint using Nav2 BasicNavigator with simulation-aware progress logging."""
+        print(f"\n>>> [Nav2] Navigating to '{waypoint_name}': x={x:.3f}m, y={y:.3f}m, yaw={math.degrees(yaw):+.1f} deg (timeout: {timeout_sec:.0f}s)...")
 
         goal = PoseStamped()
         goal.header.frame_id = 'map'
@@ -100,26 +100,44 @@ class ArenaMissionController:
 
         self.nav.goToPose(goal)
 
-        start_t = time.time()
+        start_clk = self.nav.get_clock().now()
+        start_wall_t = time.time()
+        last_log_wall_t = start_wall_t
+
         while not self.nav.isTaskComplete():
             feedback = self.nav.getFeedback()
-            time.sleep(0.2)
-            if time.time() - start_t > timeout_sec:
-                print(f"[Nav2 Error] Navigation to {waypoint_name} timed out ({timeout_sec}s)!")
+            now_wall_t = time.time()
+            now_clk = self.nav.get_clock().now()
+
+            elapsed_clk = (now_clk - start_clk).nanoseconds / 1e9
+            elapsed_wall = now_wall_t - start_wall_t
+
+            # Periodic progress log every 3 seconds
+            if now_wall_t - last_log_wall_t >= 3.0:
+                last_log_wall_t = now_wall_t
+                dist_str = f"{feedback.distance_remaining:.2f}m" if feedback else "measuring..."
+                print(f"  [Nav2 Progress] To '{waypoint_name}' | Remaining: {dist_str} | Elapsed: {elapsed_clk:.1f}s (sim) / {elapsed_wall:.1f}s (wall)")
+
+            time.sleep(0.1)
+
+            # Timeout check against simulation clock (or wall clock if not sim)
+            if elapsed_clk > timeout_sec:
+                print(f"[Nav2 Error] Navigation to {waypoint_name} timed out ({timeout_sec:.0f}s sim time, {elapsed_wall:.1f}s wall time)!")
                 self.nav.cancelTask()
                 return False
 
         res = self.nav.getResult()
+        elapsed_total = (self.nav.get_clock().now() - start_clk).nanoseconds / 1e9
         if res == TaskResult.SUCCEEDED:
-            print(f"[Nav2] Successfully arrived at '{waypoint_name}' in {time.time() - start_t:.1f}s.")
+            print(f"[Nav2] Successfully arrived at '{waypoint_name}' in {elapsed_total:.1f}s (sim).")
             return True
         else:
             print(f"[Nav2 Error] Navigation to '{waypoint_name}' failed with result: {res}")
             return False
 
-    def execute_docking(self, station_name: str, marker_id: int, timeout_sec: float = 40.0) -> bool:
+    def execute_docking(self, station_name: str, marker_id: int, timeout_sec: float = 120.0) -> bool:
         """Execute precision docking to designated ArUco marker."""
-        print(f"\n>>> [Docking] Starting Precision Docking at '{station_name}' to Marker ID {marker_id}...")
+        print(f"\n>>> [Docking] Starting Precision Docking at '{station_name}' to Marker ID {marker_id} (timeout: {timeout_sec:.0f}s)...")
         self.set_docking_marker_id(marker_id)
         time.sleep(0.1)
 
@@ -134,15 +152,27 @@ class ArenaMissionController:
         if future.result():
             print(f"[Docking] Trigger response: {future.result().message}")
 
-        start_t = time.time()
+        start_clk = self.nav.get_clock().now()
+        start_wall_t = time.time()
+        last_log_wall_t = start_wall_t
+
         while not self.docking_completed:
             rclpy.spin_once(self.nav, timeout_sec=0.05)
             time.sleep(0.02)
-            if time.time() - start_t > timeout_sec:
-                print(f"[Docking Error] Docking at '{station_name}' timed out ({timeout_sec}s)!")
+            now_clk = self.nav.get_clock().now()
+            now_wall_t = time.time()
+            elapsed_clk = (now_clk - start_clk).nanoseconds / 1e9
+
+            if now_wall_t - last_log_wall_t >= 3.0:
+                last_log_wall_t = now_wall_t
+                print(f"  [Docking Progress] Docking at '{station_name}' in progress... ({elapsed_clk:.1f}s sim)")
+
+            if elapsed_clk > timeout_sec:
+                print(f"[Docking Error] Docking at '{station_name}' timed out ({timeout_sec:.0f}s sim time)!")
                 return False
 
-        print(f"[Docking] Precision Docking completed successfully at '{station_name}' in {time.time() - start_t:.1f}s!")
+        elapsed_total = (self.nav.get_clock().now() - start_clk).nanoseconds / 1e9
+        print(f"[Docking] Precision Docking completed successfully at '{station_name}' in {elapsed_total:.1f}s (sim)!")
         if self.enable_sound:
             play_docking_complete(blocking=False)
         return True
@@ -156,8 +186,9 @@ class ArenaMissionController:
         try:
             msg = Twist()
             msg.linear.x = float(speed)
-            t_end = time.time() + duration
-            while time.time() < t_end:
+            start_clk = self.nav.get_clock().now()
+            target_clk = start_clk + rclpy.duration.Duration(seconds=duration)
+            while self.nav.get_clock().now() < target_clk:
                 self.cmd_vel_pub.publish(msg)
                 time.sleep(0.05)
             # Stop
@@ -169,7 +200,8 @@ class ArenaMissionController:
         print("[Undock] Cleared obstacle successfully.")
 
 
-def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False):
+def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False,
+                     nav_timeout: float = 180.0, dock_timeout: float = 120.0):
     rclpy.init()
     ctrl = ArenaMissionController(enable_sound=enable_sound, piezo_pin=piezo_pin, use_sim_time=use_sim_time)
 
@@ -193,7 +225,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("\n------------------------------------------------------------")
         print(" [Step 1/7] Home Parking -> Shelf Spot 1 Pre-docking")
         print("------------------------------------------------------------")
-        if not ctrl.navigate_to('Shelf 1 Pre-docking', *WAYPOINTS['shelf1']):
+        if not ctrl.navigate_to('Shelf 1 Pre-docking', *WAYPOINTS['shelf1'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 1 failed")
         time.sleep(1.0)
 
@@ -201,7 +233,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("\n------------------------------------------------------------")
         print(" [Step 2/7] Precision Docking at Shelf 1 (Marker ID 7)")
         print("------------------------------------------------------------")
-        if not ctrl.execute_docking('Shelf 1', MARKER_IDS['shelf1']):
+        if not ctrl.execute_docking('Shelf 1', MARKER_IDS['shelf1'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 2 failed")
         time.sleep(2.0)  # Simulating picking duration
 
@@ -210,7 +242,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print(" [Step 3/7] Undock -> Shelf Spot 2 Pre-docking")
         print("------------------------------------------------------------")
         ctrl.undock_backup(distance_m=0.20)
-        if not ctrl.navigate_to('Shelf 2 Pre-docking', *WAYPOINTS['shelf2']):
+        if not ctrl.navigate_to('Shelf 2 Pre-docking', *WAYPOINTS['shelf2'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 3 failed")
         time.sleep(1.0)
 
@@ -218,7 +250,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("\n------------------------------------------------------------")
         print(" [Step 4/7] Precision Docking at Shelf 2 (Marker ID 4)")
         print("------------------------------------------------------------")
-        if not ctrl.execute_docking('Shelf 2', MARKER_IDS['shelf2']):
+        if not ctrl.execute_docking('Shelf 2', MARKER_IDS['shelf2'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 4 failed")
         time.sleep(2.0)  # Simulating picking duration
 
@@ -227,7 +259,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print(" [Step 5/7] Undock -> Packaging Station Pre-docking")
         print("------------------------------------------------------------")
         ctrl.undock_backup(distance_m=0.20)
-        if not ctrl.navigate_to('Packaging Pre-docking', *WAYPOINTS['packaging']):
+        if not ctrl.navigate_to('Packaging Pre-docking', *WAYPOINTS['packaging'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 5 failed")
         time.sleep(1.0)
 
@@ -235,7 +267,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("\n------------------------------------------------------------")
         print(" [Step 6/7] Precision Docking at Packaging Station (Marker ID 5)")
         print("------------------------------------------------------------")
-        if not ctrl.execute_docking('Packaging Station', MARKER_IDS['packaging']):
+        if not ctrl.execute_docking('Packaging Station', MARKER_IDS['packaging'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 6 failed")
         time.sleep(2.0)  # Simulating packing duration
 
@@ -244,7 +276,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print(" [Step 7/7] Undock -> Return to Home Parking")
         print("------------------------------------------------------------")
         ctrl.undock_backup(distance_m=0.20)
-        if not ctrl.navigate_to('Home Parking', *WAYPOINTS['home']):
+        if not ctrl.navigate_to('Home Parking', *WAYPOINTS['home'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 7 failed")
 
         total_elapsed = time.time() - mission_start_t
@@ -264,9 +296,17 @@ def main():
     parser.add_argument('--no-sound', action='store_true', help="Disable sound effects")
     parser.add_argument('--buzzer-pin', type=int, default=None, help="Raspberry Pi GPIO pin for piezo buzzer")
     parser.add_argument('--sim', action='store_true', help="Enable use_sim_time for Gazebo simulation")
+    parser.add_argument('--nav-timeout', type=float, default=180.0, help="Navigation timeout in seconds (default: 180.0)")
+    parser.add_argument('--dock-timeout', type=float, default=120.0, help="Docking timeout in seconds (default: 120.0)")
     args = parser.parse_args()
 
-    run_full_mission(enable_sound=not args.no_sound, piezo_pin=args.buzzer_pin, use_sim_time=args.sim)
+    run_full_mission(
+        enable_sound=not args.no_sound,
+        piezo_pin=args.buzzer_pin,
+        use_sim_time=args.sim,
+        nav_timeout=args.nav_timeout,
+        dock_timeout=args.dock_timeout
+    )
 
 
 if __name__ == '__main__':
