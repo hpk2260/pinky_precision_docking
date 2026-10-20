@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>pinky_precision_docking</name>
-  <version>0.1.0</version>
+  <version>5.0.0</version>
   <description>Precision ArUco auto-docking package for Pinky Pro mobile robot</description>
   <maintainer email="user@todo.todo">user</maintainer>
   <license>Apache-2.0</license>
@@ -11,6 +11,8 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>nav_msgs</depend>
   <depend>cv_bridge</depend>
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-opencv</exec_depend>

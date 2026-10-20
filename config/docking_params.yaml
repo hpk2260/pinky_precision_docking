@@ -1,41 +1,65 @@
 precision_docking_node:
   ros__parameters:
-    # Marker Settings
-    marker_size: 0.06           # meters (6cm x 6cm)
-    target_marker_id: -1        # Target Marker ID (-1: auto-detect & lock onto any marker)
-    aruco_dictionary_id: "DICT_5X5_250"  # Supports DICT_5X5_50, 5X5_100, 5X5_250
+    # 1. 트리거 및 초기 상태 설정
+    start_in_idle: false              # false: 노드 실행 즉시 SEARCH 진입, true: /docking/start 대기
+    trigger_service_name: "/docking/start"
+    cancel_service_name: "/docking/cancel"
 
-    # Topics
+    # 2. [Branch A] 단안 RGB 카메라 + ArUco 마커 설정
+    marker_size: 0.06                 # 마커 실제 물리적 크기 (기본값 0.06m = 6cm)
+    target_marker_id: -1              # 목표 마커 ID (-1: 검출된 첫 5x5 마커 자동 락온)
+    aruco_dictionary_id: "DICT_5X5_250"
     use_compressed: true
     image_topic: "/camera/image_raw"
     camera_info_topic: "/camera/camera_info"
     cmd_vel_topic: "/cmd_vel"
+    camera_x_offset: 0.0              # 카메라 장착 좌우 물리 오프셋 보정치 (m)
+    camera_z_offset: 0.035            # 회전 중심(base_link) 대비 카메라 전방 장착 거리 (m, 3.5cm)
 
-    # Docking Goal & Thresholds
-    target_distance: 0.20
-    distance_tolerance: 0.02
-    yaw_tolerance: 0.04
-    lateral_tolerance: 0.02
+    # 3. [Branch B] 2D LiDAR (/scan) 전방 ROI 및 각도 오차 추출 설정
+    scan_topic: "/scan"
+    lidar_roi_angle_deg: 65.0         # 전방 LiDAR 추출 각도 범위 (+/- 65 deg, 초근접에서도 벽면 폭 50cm 이상 확보)
+    lidar_min_range: 0.03             # 유효 최소 거리 (m)
+    lidar_max_range: 1.20             # 유효 최대 거리 (m)
+    lidar_offset_x: 0.0               # 거리 보정 오프셋 (m)
+    lidar_use_min_dist: false         # false: 전방 평균 거리(z_lidar), true: 최소 거리 사용
 
-    # Advanced Features (T-Maneuver Collinear Alignment)
-    enable_t_maneuver: true       # Orthogonal T-maneuver (90 deg turn -> lateral drive -> 90 deg return)
-    t_maneuver_min_dist: 0.20     # Minimum distance from marker to perform T-maneuver (m)
-    t_maneuver_lateral_speed: 0.05 # Low-speed lateral drive velocity (m/s)
-    enable_wall_alignment: false  # Pure direct marker pursuit (prevents turning away from marker)
-    enable_blind_push: true       # Use odometry for <10cm ultra-close docking (prevents marker lost)
-    vision_min_distance: 0.14     # Hand-off distance to odometry blind drive (m)
-    blind_push_speed: 0.04        # Low-speed straight push velocity (m/s)
+    # 4. [Fusion & Control] 센서 퓨전 및 도킹 완료 판정 (docking finish?) 설정
+    alpha: 0.6                        # 거리 상보 필터 가중치 (z_fused = alpha*z_cam + (1-alpha)*z_lidar)
+    angular_alpha: 0.25               # 각도 퓨전 가중치 (LiDAR 벽면 각도 75% + 카메라 법선 각도 25%)
+    fusion_near_distance: 0.35        # 근접 센서 퓨전 활성화 기준 거리 (m)
+    vision_min_distance: 0.14         # 초근접 카메라 사각지대 LiDAR 폴백 기준 거리 (m)
 
-    # Controller Gains & Limits
-    kp_linear: 0.5
-    kp_angular: 1.2
-    max_linear_vel: 0.10
-    max_angular_vel: 0.35
+    target_distance: 0.10             # 목표 도킹 완료 거리 (m)
+    distance_tolerance: 0.01          # 거리 허용 오차 (0.01m = 1cm)
+    center_tolerance: 0.005           # 좌우 중심 허용 오차 (0.005m = 5mm 정밀 도킹)
+    angle_tolerance_deg: 2.0          # 수직 정렬 각도 허용 오차 (2.0 deg)
+    target_wall_angle_deg: 0.0        # 목표 벽면 상대 각도 (0.0: 전면 범퍼 11자 평행, 90.0: 측면 평행)
+    wall_align_tol_deg: 0.5           # 벽면 평행 정렬 허용 각도 오차 (0.5 deg 이내 초정밀 정렬)
+
+    # 5. Pose 제어 게인 설정 (부드러운 연속 S-Curve 및 울컥거림 방지)
+    kp_linear: 0.55
+    kp_lateral: 1.8
+    kp_angular: 1.8
+    max_linear_vel: 0.08
     min_linear_vel: 0.02
-    min_angular_vel: 0.05
+    max_angular_vel: 0.30
+    min_angular_vel: 0.03
     invert_angular: false
+    enable_wide_turn: false
+    wide_turn_threshold: 0.04
 
-    # Safety & Filter
-    loss_timeout: 1.2
-    ema_alpha: 0.6
-    search_angular_vel: 0.20
+    # 6. 필터 및 RECOVERY(복구) 모드 설정
+    allow_retreat: true               # true: 시작 위치 뒤로는 절대 가지 않되, 벽면 근접 시 재정렬 후진 복구 허용
+    ema_alpha: 0.6                    # 지터 제거용 EMA 필터 가중치
+    loss_timeout: 0.8                 # 마커 소실 판정 시간 (초)
+    lidar_timeout: 0.6                # LiDAR 데이터 유효 시간 (초)
+    search_angular_vel: 0.15          # SEARCH 상태 회전 속도 (rad/s)
+    recovery_backup_speed: -0.04      # RECOVERY/재정렬 후진 속도 (m/s)
+    recovery_backup_distance: 0.08    # RECOVERY 최대 후진 거리 (m)
+    recovery_backup_duration: 2.0     # RECOVERY 후진 최대 지속 시간 (초)
+    recovery_max_duration: 5.0        # RECOVERY 전체 타임아웃 (초)
+
+    # 7. 포트폴리오 실험 로깅 및 OSD 설정
+    osd_bg_alpha: 0.35                # OSD 상단 자막 배경 불투명도 (0.0: 완전 투명, 1.0: 완전 불투명, 기본 0.35)
+    csv_log_path: "/home/user/pinky_pro/docking_experiment_log.csv"
