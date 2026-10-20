@@ -24,6 +24,13 @@ import time
 import wave
 from typing import List, Optional, Tuple
 
+try:
+    from pinkylib import Buzzer as PinkyHardwareBuzzer
+    HAS_PINKYLIB = True
+except ImportError:
+    HAS_PINKYLIB = False
+    PinkyHardwareBuzzer = None
+
 
 CACHE_DIR = os.path.expanduser("~/.cache/pinky_sounds")
 
@@ -95,6 +102,14 @@ class SoundManager:
         self._reverse_thread: Optional[threading.Thread] = None
         self._reverse_stop_event = threading.Event()
         self._gpio_buzzer = None
+        self._pinky_hw_buzzer = None
+
+        if HAS_PINKYLIB and PinkyHardwareBuzzer is not None:
+            try:
+                self._pinky_hw_buzzer = PinkyHardwareBuzzer()
+                self._pinky_hw_buzzer.buzzer_start()
+            except Exception as e:
+                print(f"[SoundManager Note] pinkylib.Buzzer init: {e}")
 
         # Pre-generate WAV files
         self._prepare_audio_files()
@@ -182,6 +197,20 @@ class SoundManager:
         # Play via speaker
         proc = self._play_file_subprocess(self.docking_wav)
 
+        # Also play via official Pinky Pro hardware buzzer if directly running on robot
+        if self._pinky_hw_buzzer:
+            def _play_hw():
+                for freq, dur in [(523, 0.12), (659, 0.12), (784, 0.12), (1046, 0.35)]:
+                    try:
+                        self._pinky_hw_buzzer.set_buzzer_freq(freq)
+                        self._pinky_hw_buzzer.set_buzzer_duty(50)
+                        time.sleep(dur)
+                        self._pinky_hw_buzzer.set_buzzer_duty(0)
+                        time.sleep(0.02)
+                    except Exception:
+                        break
+            threading.Thread(target=_play_hw, daemon=True).start()
+
         # Also play via GPIO piezo if configured
         if self._gpio_buzzer:
             threading.Thread(target=self._play_gpio_sequence, args=(DOCKING_CHIME_NOTES,), daemon=True).start()
@@ -201,6 +230,19 @@ class SoundManager:
         self._reverse_stop_event.clear()
 
         def _loop_playback():
+            if self._pinky_hw_buzzer:
+                def _hw_beep_loop():
+                    while not self._reverse_stop_event.is_set():
+                        try:
+                            self._pinky_hw_buzzer.set_buzzer_freq(1000)
+                            self._pinky_hw_buzzer.set_buzzer_duty(50)
+                            time.sleep(0.25)
+                            self._pinky_hw_buzzer.set_buzzer_duty(0)
+                            time.sleep(0.20)
+                        except Exception:
+                            break
+                threading.Thread(target=_hw_beep_loop, daemon=True).start()
+
             while not self._reverse_stop_event.is_set():
                 proc = self._play_file_subprocess(self.reverse_beep_wav)
                 self._reverse_proc = proc
@@ -224,6 +266,11 @@ class SoundManager:
     def stop_reverse_melody(self):
         """Stop reverse melody immediately when backup completes."""
         self._reverse_stop_event.set()
+        if self._pinky_hw_buzzer:
+            try:
+                self._pinky_hw_buzzer.set_buzzer_duty(0)
+            except Exception:
+                pass
         if self._reverse_proc:
             try:
                 self._reverse_proc.terminate()

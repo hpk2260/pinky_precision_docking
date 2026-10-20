@@ -23,7 +23,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
-from std_msgs.msg import Bool, Int32
+from std_msgs.msg import Bool, Int32, String
 from std_srvs.srv import Trigger
 
 from pinky_precision_docking.sound_effects import (
@@ -70,7 +70,18 @@ class ArenaMissionController:
         )
         self.cmd_vel_pub = self.nav.create_publisher(Twist, '/cmd_vel', 10)
         self.target_id_pub = self.nav.create_publisher(Int32, '/docking/target_marker_id', 10)
+        self.buzzer_cmd_pub = self.nav.create_publisher(String, '/pinky/buzzer/command', 10)
         self.start_dock_cli = self.nav.create_client(Trigger, '/docking/start')
+
+    def _trigger_buzzer(self, command: str):
+        """Send sound command to real Pinky Pro hardware buzzer node over ROS 2."""
+        if not self.enable_sound:
+            return
+        msg = String()
+        msg.data = str(command)
+        for _ in range(2):
+            self.buzzer_cmd_pub.publish(msg)
+            time.sleep(0.005)
 
     def _docking_completed_cb(self, msg: Bool):
         if msg.data:
@@ -175,6 +186,7 @@ class ArenaMissionController:
         elapsed_total = (self.nav.get_clock().now() - start_clk).nanoseconds / 1e9
         print(f"[Docking] Precision Docking completed successfully at '{station_name}' in {elapsed_total:.1f}s (sim)!")
         if self.enable_sound:
+            self._trigger_buzzer('docking_complete')
             play_docking_complete(blocking=False)
         return True
 
@@ -185,6 +197,7 @@ class ArenaMissionController:
         """
         print(f"[Undock] Closed-loop backing up target: {distance_m*100:.1f}cm straight at {speed:.2f}m/s...")
         if self.enable_sound:
+            self._trigger_buzzer('reverse_start')
             start_reverse_melody()
 
         start_pos = None
@@ -253,6 +266,7 @@ class ArenaMissionController:
         finally:
             self.nav.destroy_subscription(odom_sub)
             if self.enable_sound:
+                self._trigger_buzzer('reverse_stop')
                 stop_reverse_melody()
 
         print("[Undock] Cleared obstacle successfully with precise distance.")
