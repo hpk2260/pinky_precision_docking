@@ -3322,5 +3322,120 @@
       </link>
     </model>
 
+    <!-- ========================================== -->
+    <!-- Home Parking Lot (Bays, 'P' Markings, Parked Pinkys) -->
+    <!-- ========================================== -->
+    <!-- Home Parking Lot Floor Bays & 'P' Markings -->
+    <model name="home_parking_bays">
+      <static>true</static>
+      <pose>0.0600 0.0000 0.0010 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>0.40 0.64</size>
+            </plane>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>file://img/parking_bays.png</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Parked Pinky Pro (Left Bay / Slot 1) -->
+    <model name="pinky_parked_left">
+      <static>true</static>
+      <pose>0.0000 0.2000 0.0000 0 0 0</pose>
+      <link name="link">
+        <visual name="base">
+          <pose>0 0 0.028 0 0 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/base_link.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="screen">
+          <pose>-0.0385 0 0.098 0 0.2618 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/screen_assy.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="lidar">
+          <pose>0 0 0.076 0 0 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="lamp">
+          <pose>-0.0577 0 0.082 0 0 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/robot_lamp.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="wheel_left">
+          <pose>0 0.04055 0.028 0 0 1.5708</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="wheel_right">
+          <pose>0 -0.04055 0.028 0 0 -1.5708</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Parked Pinky Pro (Right Bay / Slot 3) -->
+    <model name="pinky_parked_right">
+      <static>true</static>
+      <pose>0.0000 -0.2000 0.0000 0 0 0</pose>
+      <link name="link">
+        <visual name="base">
+          <pose>0 0 0.028 0 0 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/base_link.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="screen">
+          <pose>-0.0385 0 0.098 0 0.2618 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/screen_assy.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="lidar">
+          <pose>0 0 0.076 0 0 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="lamp">
+          <pose>-0.0577 0 0.082 0 0 0</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/robot_lamp.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="wheel_left">
+          <pose>0 0.04055 0.028 0 0 1.5708</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
+          </geometry>
+        </visual>
+        <visual name="wheel_right">
+          <pose>0 -0.04055 0.028 0 0 -1.5708</pose>
+          <geometry>
+            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
   </world>
 </sdf>
