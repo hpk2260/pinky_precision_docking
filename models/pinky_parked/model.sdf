@@ -21,12 +21,6 @@
           <mesh><uri>model://pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh>
         </geometry>
       </visual>
-      <visual name="lamp">
-        <pose>-0.0577 0 0.082 0 0 0</pose>
-        <geometry>
-          <mesh><uri>model://pinky_description/meshes/visual/robot_lamp.dae</uri></mesh>
-        </geometry>
-      </visual>
       <visual name="wheel_left">
         <pose>0 0.04055 0.028 0 0 1.5708</pose>
         <geometry>
