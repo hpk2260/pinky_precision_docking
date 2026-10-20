@@ -131,8 +131,8 @@ class PrecisionDockingNode(Node):
         # Publishers
         self.cmd_vel_pub = self.create_publisher(Twist, self.cmd_vel_topic, reliable_qos)
         self.completed_pub = self.create_publisher(Bool, '/docking_completed', reliable_qos)
-        self.debug_raw_pub = self.create_publisher(Image, '/docking/debug_image', sensor_qos)
-        self.debug_image_pub = self.create_publisher(CompressedImage, '/docking/debug_image/compressed', sensor_qos)
+        self.debug_raw_pub = self.create_publisher(Image, '/docking/debug_image', reliable_qos)
+        self.debug_image_pub = self.create_publisher(CompressedImage, '/docking/debug_image/compressed', reliable_qos)
 
         # Subscribers
         compressed_topic = self.image_topic if 'compressed' in self.image_topic else f'{self.image_topic}/compressed'
@@ -580,13 +580,12 @@ class PrecisionDockingNode(Node):
 
     def _publish_debug(self, img: np.ndarray):
         stamp = self.get_clock().now().to_msg()
-        if self.debug_raw_pub.get_subscription_count() > 0:
-            try:
-                raw_msg = self.bridge.cv2_to_imgmsg(img, encoding='bgr8')
-                raw_msg.header.stamp = stamp
-                self.debug_raw_pub.publish(raw_msg)
-            except Exception:
-                pass
+        try:
+            raw_msg = self.bridge.cv2_to_imgmsg(img, encoding='bgr8')
+            raw_msg.header.stamp = stamp
+            self.debug_raw_pub.publish(raw_msg)
+        except Exception:
+            pass
 
         if self.debug_image_pub.get_subscription_count() > 0:
             success, enc = cv2.imencode('.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
