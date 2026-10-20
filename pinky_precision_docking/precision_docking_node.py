@@ -171,7 +171,7 @@ class PrecisionDockingNode(Node):
     def _declare_and_get_parameters(self):
         if not self.has_parameter('use_sim_time'):
             self.declare_parameter('use_sim_time', False, ParameterDescriptor(description='Use simulation clock from /clock'))
-        self.declare_parameter('start_in_idle', False, ParameterDescriptor(description='Start in IDLE waiting for /docking/start'))
+        self.declare_parameter('start_in_idle', True, ParameterDescriptor(description='Start in IDLE waiting for /docking/start'))
         self.declare_parameter('trigger_service_name', '/docking/start')
         self.declare_parameter('cancel_service_name', '/docking/cancel')
 
@@ -418,10 +418,12 @@ class PrecisionDockingNode(Node):
             self.get_logger().info(f"[Phase] {self.last_logged_phase.value} -> {out.phase.value} ({self.controller.reason})")
             self.last_logged_phase = out.phase
 
-        twist = Twist()
-        twist.linear.x = float(out.v)
-        twist.angular.z = float(out.w)
-        self._publish_twist(twist)
+        # Only publish velocity commands when actively docking (never interfere with Nav2 in IDLE)
+        if out.phase != Phase.IDLE:
+            twist = Twist()
+            twist.linear.x = float(out.v)
+            twist.angular.z = float(out.w)
+            self._publish_twist(twist)
 
         # Completion Status
         is_docked = (out.phase == Phase.DOCKED)
@@ -431,6 +433,9 @@ class PrecisionDockingNode(Node):
 
         if is_docked and not self.docking_logged and self.controller.result is not None:
             self._log_docking_success(now, est, self.controller.result)
+            self._stop_robot()
+            self.controller.cancel(now)
+            self.last_logged_phase = Phase.IDLE
 
     def _log_docking_success(self, now: float, est: DockingEstimate, res: dict):
         self.docking_logged = True

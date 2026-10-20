@@ -25,7 +25,7 @@ def generate_launch_description():
 
     start_in_idle_arg = DeclareLaunchArgument(
         'start_in_idle',
-        default_value='False',
+        default_value='True',
         description='Start in IDLE state waiting for /docking/start trigger service',
     )
 
