@@ -1,0 +1,150 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <model name="open_manipulator_x">
+    <static>true</static>
+    
+    <!-- Mounting Workstation Base -->
+    <link name="base_stand">
+      <collision name="stand_collision">
+        <pose>0.08 0 0.075 0 0 0</pose>
+        <geometry>
+          <box><size>0.34 0.08 0.15</size></box>
+        </geometry>
+      </collision>
+      <visual name="stand_visual">
+        <pose>0.08 0 0.075 0 0 0</pose>
+        <geometry>
+          <box><size>0.34 0.08 0.15</size></box>
+        </geometry>
+        <material>
+          <ambient>0.25 0.25 0.28 1</ambient>
+          <diffuse>0.3 0.32 0.35 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+      <visual name="plate_visual">
+        <pose>0 0 0.15 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/plate.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.2 0.2 0.2 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+        </material>
+      </visual>
+      
+      <!-- Link 1 (Base) -->
+      <visual name="link1_visual">
+        <pose>0 0 0.15 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/link1.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <!-- Link 2 (Shoulder) -->
+      <visual name="link2_visual">
+        <pose>0.01200 0.00000 0.16900 0 0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/link2.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <!-- Link 3 (Upper Arm) -->
+      <visual name="link3_visual">
+        <pose>0.01200 0.00000 0.20950 0 -0.35000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/link3.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <!-- Link 4 (Forearm) -->
+      <visual name="link4_visual">
+        <pose>-0.00935 0.00000 0.33797 0 0.20000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/link4.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <!-- Link 5 (Wrist) -->
+      <visual name="link5_visual">
+        <pose>0.11218 0.00000 0.31333 0 0.00000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/link5.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.15 0.15 0.15 1</ambient>
+          <diffuse>0.2 0.2 0.2 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <!-- Gripper Left -->
+      <visual name="gripper_left_visual">
+        <pose>0.19388 -0.01800 0.31333 0 0.00000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/gripper_left_palm.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.1 0.1 1</ambient>
+          <diffuse>0.8 0.1 0.1 1</diffuse>
+        </material>
+      </visual>
+
+      <!-- Gripper Right -->
+      <visual name="gripper_right_visual">
+        <pose>0.19388 0.01800 0.31333 0 0.00000 0</pose>
+        <geometry>
+          <mesh>
+            <scale>0.001 0.001 0.001</scale>
+            <uri>model://open_manipulator_x/meshes/gripper_right_palm.stl</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <ambient>0.8 0.1 0.1 1</ambient>
+          <diffuse>0.8 0.1 0.1 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

@@ -15,6 +15,16 @@ def generate_launch_description():
     set_gallium = SetEnvironmentVariable('GALLIUM_DRIVER', 'd3d12')
     set_adapter = SetEnvironmentVariable('MESA_D3D12_DEFAULT_ADAPTER_NAME', 'NVIDIA')
 
+    # Resource path for Gazebo models (including open_manipulator_x)
+    models_dir = os.path.join(gz_sim_dir, 'models')
+    docking_models = os.path.join(docking_dir, 'models')
+    src_models = '/home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models'
+    curr_res = os.environ.get('GZ_SIM_RESOURCE_PATH', '')
+    set_resource = SetEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        f"{models_dir}:{docking_models}:{src_models}:{curr_res}"
+    )
+
     world_name_arg = DeclareLaunchArgument(
         'world_name',
         default_value='arena_docking.world',
@@ -63,6 +73,7 @@ def generate_launch_description():
     return LaunchDescription([
         set_gallium,
         set_adapter,
+        set_resource,
         world_name_arg,
         cam_tilt_deg_arg,
         spawn_x_arg,
