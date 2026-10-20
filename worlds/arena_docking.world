@@ -258,268 +258,268 @@
         </visual>
       </link>
     </model>
-    <!-- OpenMANIPULATOR-X (Top / North Packaging Workstation) -->
+    <!-- ROBOTIS OpenMANIPULATOR-X (North Packaging Workstation) -->
     <model name="omx_manipulator_top">
       <static>true</static>
-      <pose>1.2300 0.4800 0.0000 0 0 3.1416</pose>
-      <link name="base_stand">
+      <pose>1.2000 0.4400 0.0000 0 0 3.1416</pose>
+      <link name="link">
+        <!-- Mounting Workstation Pedestal -->
         <collision name="stand_collision">
-          <pose>0.08 0 0.075 0 0 0</pose>
-          <geometry>
-            <box><size>0.34 0.08 0.15</size></box>
-          </geometry>
+          <pose>0.02 0 0.025 0 0 0</pose>
+          <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
         </collision>
         <visual name="stand_visual">
-          <pose>0.08 0 0.075 0 0 0</pose>
-          <geometry>
-            <box><size>0.34 0.08 0.15</size></box>
-          </geometry>
+          <pose>0.02 0 0.025 0 0 0</pose>
+          <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
           <material>
-            <ambient>0.25 0.25 0.28 1</ambient>
-            <diffuse>0.3 0.32 0.35 1</diffuse>
-            <specular>0.2 0.2 0.2 1</specular>
+            <ambient>0.2 0.22 0.25 1</ambient>
+            <diffuse>0.25 0.28 0.32 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
-        <visual name="plate_visual">
-          <pose>0 0 0.15 0 0 0</pose>
-          <geometry>
-            <mesh>
-              <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/plate.stl</uri>
-            </mesh>
-          </geometry>
-          <material>
-            <ambient>0.2 0.2 0.2 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-          </material>
-        </visual>
+
+        <!-- Link 1 (Base Actuator) -->
         <visual name="link1_visual">
-          <pose>0 0 0.15 0 0 0</pose>
+          <pose>0.00000 0.00000 0.05000 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link1.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link1.stl</uri>
             </mesh>
           </geometry>
           <material>
             <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
+            <diffuse>0.20 0.20 0.20 1</diffuse>
             <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
+
+        <!-- Link 2 (Shoulder Frame - Signature White) -->
         <visual name="link2_visual">
-          <pose>0.01200 0.00000 0.16900 0 0 0</pose>
+          <pose>0.01200 0.00000 0.05000 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link2.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link2.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.92 0.92 0.95 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
           </material>
         </visual>
+
+        <!-- Link 3 (Upper Arm Frame - Signature White) -->
         <visual name="link3_visual">
-          <pose>0.01200 0.00000 0.20950 0 -0.35000 0</pose>
+          <pose>0.01200 0.00000 0.10950 0 -0.40000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link3.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link3.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.92 0.92 0.95 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
           </material>
         </visual>
+
+        <!-- Link 4 (Forearm Frame - Signature White) -->
         <visual name="link4_visual">
-          <pose>-0.00935 0.00000 0.33797 0 0.20000 0</pose>
+          <pose>-0.01574 0.00000 0.23674 0 0.25000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link4.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link4.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.92 0.92 0.95 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
           </material>
         </visual>
+
+        <!-- Link 5 (Wrist Actuator - Dark Charcoal) -->
         <visual name="link5_visual">
-          <pose>0.11218 0.00000 0.31333 0 0.00000 0</pose>
+          <pose>0.10441 0.00000 0.20606 0 0.00000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link5.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link5.stl</uri>
             </mesh>
           </geometry>
           <material>
             <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
+            <diffuse>0.20 0.20 0.20 1</diffuse>
             <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
+
+        <!-- Gripper Left Finger (ROBOTIS Red) -->
         <visual name="gripper_left_visual">
-          <pose>0.19388 -0.01800 0.31333 0 0.00000 0</pose>
+          <pose>0.18611 -0.01800 0.20606 0 0.00000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/gripper_left_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_left_palm.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.8 0.1 0.1 1</ambient>
-            <diffuse>0.8 0.1 0.1 1</diffuse>
+            <ambient>0.70 0.12 0.12 1</ambient>
+            <diffuse>0.88 0.15 0.15 1</diffuse>
+            <specular>0.5 0.3 0.3 1</specular>
           </material>
         </visual>
+
+        <!-- Gripper Right Finger (ROBOTIS Red) -->
         <visual name="gripper_right_visual">
-          <pose>0.19388 0.01800 0.31333 0 0.00000 0</pose>
+          <pose>0.18611 0.01800 0.20606 0 0.00000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/gripper_right_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_right_palm.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.8 0.1 0.1 1</ambient>
-            <diffuse>0.8 0.1 0.1 1</diffuse>
+            <ambient>0.70 0.12 0.12 1</ambient>
+            <diffuse>0.88 0.15 0.15 1</diffuse>
+            <specular>0.5 0.3 0.3 1</specular>
           </material>
         </visual>
       </link>
     </model>
-    <!-- OpenMANIPULATOR-X (Bottom / South Packaging Workstation) -->
+    <!-- ROBOTIS OpenMANIPULATOR-X (South Packaging Workstation) -->
     <model name="omx_manipulator_bottom">
       <static>true</static>
-      <pose>1.2300 0.0600 0.0000 0 0 3.1416</pose>
-      <link name="base_stand">
+      <pose>1.2000 0.0600 0.0000 0 0 3.1416</pose>
+      <link name="link">
+        <!-- Mounting Workstation Pedestal -->
         <collision name="stand_collision">
-          <pose>0.08 0 0.075 0 0 0</pose>
-          <geometry>
-            <box><size>0.34 0.08 0.15</size></box>
-          </geometry>
+          <pose>0.02 0 0.025 0 0 0</pose>
+          <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
         </collision>
         <visual name="stand_visual">
-          <pose>0.08 0 0.075 0 0 0</pose>
-          <geometry>
-            <box><size>0.34 0.08 0.15</size></box>
-          </geometry>
+          <pose>0.02 0 0.025 0 0 0</pose>
+          <geometry><box><size>0.12 0.12 0.05</size></box></geometry>
           <material>
-            <ambient>0.25 0.25 0.28 1</ambient>
-            <diffuse>0.3 0.32 0.35 1</diffuse>
-            <specular>0.2 0.2 0.2 1</specular>
+            <ambient>0.2 0.22 0.25 1</ambient>
+            <diffuse>0.25 0.28 0.32 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
-        <visual name="plate_visual">
-          <pose>0 0 0.15 0 0 0</pose>
-          <geometry>
-            <mesh>
-              <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/plate.stl</uri>
-            </mesh>
-          </geometry>
-          <material>
-            <ambient>0.2 0.2 0.2 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-          </material>
-        </visual>
+
+        <!-- Link 1 (Base Actuator) -->
         <visual name="link1_visual">
-          <pose>0 0 0.15 0 0 0</pose>
+          <pose>0.00000 0.00000 0.05000 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link1.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link1.stl</uri>
             </mesh>
           </geometry>
           <material>
             <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
+            <diffuse>0.20 0.20 0.20 1</diffuse>
             <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
+
+        <!-- Link 2 (Shoulder Frame - Signature White) -->
         <visual name="link2_visual">
-          <pose>0.01200 0.00000 0.16900 0 0 0</pose>
+          <pose>0.01200 0.00000 0.05000 0 0 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link2.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link2.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.92 0.92 0.95 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
           </material>
         </visual>
+
+        <!-- Link 3 (Upper Arm Frame - Signature White) -->
         <visual name="link3_visual">
-          <pose>0.01200 0.00000 0.20950 0 -0.35000 0</pose>
+          <pose>0.01200 0.00000 0.10950 0 -0.40000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link3.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link3.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.92 0.92 0.95 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
           </material>
         </visual>
+
+        <!-- Link 4 (Forearm Frame - Signature White) -->
         <visual name="link4_visual">
-          <pose>-0.00935 0.00000 0.33797 0 0.20000 0</pose>
+          <pose>-0.01574 0.00000 0.23674 0 0.25000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link4.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link4.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
-            <specular>0.3 0.3 0.3 1</specular>
+            <ambient>0.85 0.85 0.88 1</ambient>
+            <diffuse>0.92 0.92 0.95 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
           </material>
         </visual>
+
+        <!-- Link 5 (Wrist Actuator - Dark Charcoal) -->
         <visual name="link5_visual">
-          <pose>0.11218 0.00000 0.31333 0 0.00000 0</pose>
+          <pose>0.10441 0.00000 0.20606 0 0.00000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/link5.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/link5.stl</uri>
             </mesh>
           </geometry>
           <material>
             <ambient>0.15 0.15 0.15 1</ambient>
-            <diffuse>0.2 0.2 0.2 1</diffuse>
+            <diffuse>0.20 0.20 0.20 1</diffuse>
             <specular>0.3 0.3 0.3 1</specular>
           </material>
         </visual>
+
+        <!-- Gripper Left Finger (ROBOTIS Red) -->
         <visual name="gripper_left_visual">
-          <pose>0.19388 -0.01800 0.31333 0 0.00000 0</pose>
+          <pose>0.18611 -0.01800 0.20606 0 0.00000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/gripper_left_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_left_palm.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.8 0.1 0.1 1</ambient>
-            <diffuse>0.8 0.1 0.1 1</diffuse>
+            <ambient>0.70 0.12 0.12 1</ambient>
+            <diffuse>0.88 0.15 0.15 1</diffuse>
+            <specular>0.5 0.3 0.3 1</specular>
           </material>
         </visual>
+
+        <!-- Gripper Right Finger (ROBOTIS Red) -->
         <visual name="gripper_right_visual">
-          <pose>0.19388 0.01800 0.31333 0 0.00000 0</pose>
+          <pose>0.18611 0.01800 0.20606 0 0.00000 0</pose>
           <geometry>
             <mesh>
               <scale>0.001 0.001 0.001</scale>
-              <uri>model://open_manipulator_x/meshes/gripper_right_palm.stl</uri>
+              <uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/open_manipulator_x/meshes/gripper_right_palm.stl</uri>
             </mesh>
           </geometry>
           <material>
-            <ambient>0.8 0.1 0.1 1</ambient>
-            <diffuse>0.8 0.1 0.1 1</diffuse>
+            <ambient>0.70 0.12 0.12 1</ambient>
+            <diffuse>0.88 0.15 0.15 1</diffuse>
+            <specular>0.5 0.3 0.3 1</specular>
           </material>
         </visual>
       </link>
@@ -565,7 +565,7 @@
     <!-- ArUco Marker DICT_5X5_250 ID 6 -->
     <model name="aruco_5x5_id6_shelf1_left">
       <static>true</static>
-      <pose>-0.0390 1.3200 0.0680 0.0000 0.0000 3.1416</pose>
+      <pose>-0.0390 1.2300 0.0680 0.0000 0.0000 3.1416</pose>
       <link name="link">
         <visual name="white_bg">
           <pose>0 0 0 0 0 0</pose>
@@ -1457,7 +1457,7 @@
     <!-- ArUco Marker DICT_5X5_250 ID 8 -->
     <model name="aruco_5x5_id8_shelf1_right">
       <static>true</static>
-      <pose>-0.0390 1.6200 0.0680 0.0000 0.0000 3.1416</pose>
+      <pose>-0.0390 1.7100 0.0680 0.0000 0.0000 3.1416</pose>
       <link name="link">
         <visual name="white_bg">
           <pose>0 0 0 0 0 0</pose>
@@ -3342,7 +3342,7 @@
             <specular>0.2 0.2 0.2 1</specular>
             <pbr>
               <metal>
-                <albedo_map>file://img/parking_bays.png</albedo_map>
+                <albedo_map>file:///home/user/pinky_pro/src/pinky_pro/pinky_gz_sim/models/img/parking_bays.png</albedo_map>
               </metal>
             </pbr>
           </material>
@@ -3357,39 +3357,27 @@
       <link name="link">
         <visual name="base">
           <pose>0 0 0.028 0 0 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/base_link.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/base_link.dae</uri></mesh></geometry>
         </visual>
         <visual name="screen">
           <pose>-0.0385 0 0.098 0 0.2618 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/screen_assy.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/screen_assy.dae</uri></mesh></geometry>
         </visual>
         <visual name="lidar">
           <pose>0 0 0.076 0 0 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh></geometry>
         </visual>
         <visual name="lamp">
           <pose>-0.0577 0 0.082 0 0 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/robot_lamp.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/robot_lamp.dae</uri></mesh></geometry>
         </visual>
         <visual name="wheel_left">
           <pose>0 0.04055 0.028 0 0 1.5708</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/main_wheel.dae</uri></mesh></geometry>
         </visual>
         <visual name="wheel_right">
           <pose>0 -0.04055 0.028 0 0 -1.5708</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/main_wheel.dae</uri></mesh></geometry>
         </visual>
       </link>
     </model>
@@ -3401,39 +3389,27 @@
       <link name="link">
         <visual name="base">
           <pose>0 0 0.028 0 0 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/base_link.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/base_link.dae</uri></mesh></geometry>
         </visual>
         <visual name="screen">
           <pose>-0.0385 0 0.098 0 0.2618 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/screen_assy.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/screen_assy.dae</uri></mesh></geometry>
         </visual>
         <visual name="lidar">
           <pose>0 0 0.076 0 0 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/rplidar_c1.dae</uri></mesh></geometry>
         </visual>
         <visual name="lamp">
           <pose>-0.0577 0 0.082 0 0 0</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/robot_lamp.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/robot_lamp.dae</uri></mesh></geometry>
         </visual>
         <visual name="wheel_left">
           <pose>0 0.04055 0.028 0 0 1.5708</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/main_wheel.dae</uri></mesh></geometry>
         </visual>
         <visual name="wheel_right">
           <pose>0 -0.04055 0.028 0 0 -1.5708</pose>
-          <geometry>
-            <mesh><uri>model://pinky_description/meshes/visual/main_wheel.dae</uri></mesh>
-          </geometry>
+          <geometry><mesh><uri>file:///home/user/pinky_pro/src/pinky_pro/pinky_description/meshes/visual/main_wheel.dae</uri></mesh></geometry>
         </visual>
       </link>
     </model>
