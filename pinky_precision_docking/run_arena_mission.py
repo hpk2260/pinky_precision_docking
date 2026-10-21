@@ -39,15 +39,15 @@ from pinky_precision_docking.sound_effects import (
 
 # Arena Waypoints [x(m), y(m), yaw(rad)]
 WAYPOINTS = {
-    'home': [0.0000, 0.0000, 0.0000],
-    'shelf1': [0.5990, 1.4700, 3.1090],  # ArUco Marker 7
-    'shelf2': [1.0210, 1.5320, -1.5680], # ArUco Marker 4
+    'home': [0.1200, 0.0000, 0.0000],
+    'shelf1': [0.6000, 1.4700, 3.1416],  # Shelf 1 Area Representative Pre-docking (Views all 3 bays)
+    'shelf2': [1.1100, 1.5000, -1.5708], # Shelf 2 Area Representative Pre-docking (Centered in Corridor 2)
     'packaging': [0.7240, 0.2430, 0.1070], # ArUco Marker 5
 }
 
 MARKER_IDS = {
-    'shelf1': 7,
-    'shelf2': 4,
+    'shelf1': 8,  # Shelf 1 Right Bay Marker (ID 8)
+    'shelf2': 3,  # Shelf 2 Left Cooler Marker (ID 3)
     'packaging': 5,
 }
 
@@ -138,20 +138,25 @@ class ArenaMissionController:
             now_wall_t = time.time()
             now_clk = self.nav.get_clock().now()
 
-            elapsed_clk = (now_clk - start_clk).nanoseconds / 1e9
+            # Robust elapsed time calculation (handles uninitialized/zero clock when use_sim_time=True)
+            if start_clk.nanoseconds > 0 and now_clk.nanoseconds >= start_clk.nanoseconds:
+                elapsed_sim = (now_clk - start_clk).nanoseconds / 1e9
+            else:
+                elapsed_sim = now_wall_t - start_wall_t
+
             elapsed_wall = now_wall_t - start_wall_t
 
             # Periodic progress log every 3 seconds
             if now_wall_t - last_log_wall_t >= 3.0:
                 last_log_wall_t = now_wall_t
                 dist_str = f"{feedback.distance_remaining:.2f}m" if feedback else "measuring..."
-                print(f"  [Nav2 Progress] To '{waypoint_name}' | Remaining: {dist_str} | Elapsed: {elapsed_clk:.1f}s (sim) / {elapsed_wall:.1f}s (wall)")
+                print(f"  [Nav2 Progress] To '{waypoint_name}' | Remaining: {dist_str} | Elapsed: {elapsed_sim:.1f}s (sim) / {elapsed_wall:.1f}s (wall)")
 
             time.sleep(0.1)
 
-            # Timeout check against simulation clock (or wall clock if not sim)
-            if elapsed_clk > timeout_sec:
-                print(f"[Nav2 Error] Navigation to {waypoint_name} timed out ({timeout_sec:.0f}s sim time, {elapsed_wall:.1f}s wall time)!")
+            # Timeout check against wall clock to guarantee safety against sim clock anomalies
+            if elapsed_wall > timeout_sec:
+                print(f"[Nav2 Error] Navigation to {waypoint_name} timed out ({timeout_sec:.0f}s wall time, {elapsed_sim:.1f}s sim time)!")
                 self.nav.cancelTask()
                 return False
 
@@ -190,14 +195,18 @@ class ArenaMissionController:
             time.sleep(0.02)
             now_clk = self.nav.get_clock().now()
             now_wall_t = time.time()
-            elapsed_clk = (now_clk - start_clk).nanoseconds / 1e9
+            elapsed_wall = now_wall_t - start_wall_t
+            if start_clk.nanoseconds > 0 and now_clk.nanoseconds >= start_clk.nanoseconds:
+                elapsed_sim = (now_clk - start_clk).nanoseconds / 1e9
+            else:
+                elapsed_sim = elapsed_wall
 
             if now_wall_t - last_log_wall_t >= 3.0:
                 last_log_wall_t = now_wall_t
-                print(f"  [Docking Progress] Docking at '{station_name}' in progress... ({elapsed_clk:.1f}s sim)")
+                print(f"  [Docking Progress] Docking at '{station_name}' in progress... ({elapsed_sim:.1f}s sim)")
 
-            if elapsed_clk > timeout_sec:
-                print(f"[Docking Error] Docking at '{station_name}' timed out ({timeout_sec:.0f}s sim time)!")
+            if elapsed_wall > timeout_sec:
+                print(f"[Docking Error] Docking at '{station_name}' timed out ({timeout_sec:.0f}s wall time)!")
                 return False
 
         elapsed_total = (self.nav.get_clock().now() - start_clk).nanoseconds / 1e9
@@ -265,9 +274,9 @@ class ArenaMissionController:
                     print(f"[Undock] Target distance reached! Traveled: {dist_traveled*100:.1f}cm.")
                     break
 
-                # Safety timeout check (simulation clock)
-                elapsed_clk = (self.nav.get_clock().now() - start_clk).nanoseconds / 1e9
-                if elapsed_clk > timeout_sec:
+                # Safety timeout check (wall clock)
+                elapsed_wall = time.time() - start_wall_t
+                if elapsed_wall > timeout_sec:
                     print(f"[Undock Warning] Safety timeout reached ({timeout_sec:.1f}s). Traveled: {dist_traveled*100:.1f}cm.")
                     break
 
@@ -404,9 +413,9 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
     print("="*70)
     print("Mission Plan:")
     print("  1. Home Parking -> Shelf 1 Pre-docking")
-    print("  2. Dock to Shelf 1 (ArUco ID 7) & Doosan Arm Pick & Place")
+    print("  2. Dock to Shelf 1 Right Bay (ArUco ID 8) & Doosan Arm Pick & Place")
     print("  3. Undock -> Shelf 2 Pre-docking")
-    print("  4. Dock to Shelf 2 (ArUco ID 4) & Doosan Arm Pick & Place")
+    print("  4. Dock to Shelf 2 Left Cooler (ArUco ID 3) & Doosan Arm Pick & Place")
     print("  5. Undock -> Packaging Area Pre-docking")
     print("  6. Dock to Packaging Station (ArUco ID 5) & OMX Packaging Task")
     print("  7. Undock -> Return to Home Parking")
@@ -417,15 +426,15 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
     try:
         # Step 1: Home -> Shelf 1 Pre-docking
         print("\n------------------------------------------------------------")
-        print(" [Step 1/7] Home Parking -> Shelf Spot 1 Pre-docking")
+        print(" [Step 1/7] Home Parking -> Shelf Spot 1 Pre-docking (Right Bay)")
         print("------------------------------------------------------------")
         if not ctrl.navigate_to('Shelf 1 Pre-docking', *WAYPOINTS['shelf1'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 1 failed")
         time.sleep(1.0)
 
-        # Step 2: Docking at Shelf 1 (Marker ID 7)
+        # Step 2: Docking at Shelf 1 (Marker ID 8)
         print("\n------------------------------------------------------------")
-        print(" [Step 2/7] Precision Docking at Shelf 1 (Marker ID 7)")
+        print(" [Step 2/7] Precision Docking at Shelf 1 Right Bay (Marker ID 8)")
         print("------------------------------------------------------------")
         if not ctrl.execute_docking('Shelf 1', MARKER_IDS['shelf1'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 2 failed")
@@ -433,7 +442,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         # External Arm Task (Shelf 1)
         ctrl.wait_for_station_task(
             station_id='shelf1',
-            station_name='Shelf 1 (선반 1번)',
+            station_name='Shelf 1 Right Bay (선반 1번 우측 베이)',
             robot_name='두산 로봇팔 (Doosan Collaborative Robot)',
             task_type='부품 Pick & Place (피킹 및 핑키 적재)',
             auto_mode=auto_task,
@@ -442,16 +451,19 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
 
         # Step 3: Undock -> Shelf 2 Pre-docking
         print("\n------------------------------------------------------------")
-        print(" [Step 3/7] Undock -> Shelf Spot 2 Pre-docking")
+        print(" [Step 3/7] Undock -> Shelf Spot 2 Pre-docking (Left Cooler)")
         print("------------------------------------------------------------")
-        ctrl.undock_backup(distance_m=0.20)
+        # Step 3-1: Back up into the open central aisle (X from ~0.08m to ~0.65m)
+        ctrl.undock_backup(distance_m=0.55, speed=-0.05, timeout_sec=25.0)
+        time.sleep(0.5)
+
         if not ctrl.navigate_to('Shelf 2 Pre-docking', *WAYPOINTS['shelf2'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 3 failed")
         time.sleep(1.0)
 
-        # Step 4: Docking at Shelf 2 (Marker ID 4)
+        # Step 4: Docking at Shelf 2 (Marker ID 3)
         print("\n------------------------------------------------------------")
-        print(" [Step 4/7] Precision Docking at Shelf 2 (Marker ID 4)")
+        print(" [Step 4/7] Precision Docking at Shelf 2 Left Cooler (Marker ID 3)")
         print("------------------------------------------------------------")
         if not ctrl.execute_docking('Shelf 2', MARKER_IDS['shelf2'], timeout_sec=dock_timeout):
             raise RuntimeError("Step 4 failed")
@@ -459,7 +471,7 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         # External Arm Task (Shelf 2)
         ctrl.wait_for_station_task(
             station_id='shelf2',
-            station_name='Shelf 2 (선반 2번)',
+            station_name='Shelf 2 Left Cooler (선반 2번 좌측 냉장고)',
             robot_name='두산 로봇팔 (Doosan Collaborative Robot)',
             task_type='추가 부품 Pick & Place (피킹 및 핑키 적재)',
             auto_mode=auto_task,
@@ -470,7 +482,11 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("\n------------------------------------------------------------")
         print(" [Step 5/7] Undock -> Packaging Station Pre-docking")
         print("------------------------------------------------------------")
-        ctrl.undock_backup(distance_m=0.20)
+        # Step 5-1: Back up straight out of Shelf 2 fully into the open north aisle (Y from ~1.00m to ~1.65m)
+        ctrl.undock_backup(distance_m=0.65, speed=-0.05, timeout_sec=30.0)
+        time.sleep(0.5)
+
+        # Step 5-2: Smoothly navigate from North Corridor exit to Packaging Area Pre-docking
         if not ctrl.navigate_to('Packaging Pre-docking', *WAYPOINTS['packaging'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 5 failed")
         time.sleep(1.0)
@@ -496,7 +512,10 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
         print("\n------------------------------------------------------------")
         print(" [Step 7/7] Undock -> Return to Home Parking")
         print("------------------------------------------------------------")
-        ctrl.undock_backup(distance_m=0.20)
+        # Step 7-1: Back up straight out of Packaging station into the central aisle (X from ~0.83m to ~0.50m)
+        ctrl.undock_backup(distance_m=0.35, speed=-0.05, timeout_sec=20.0)
+        time.sleep(0.5)
+
         if not ctrl.navigate_to('Home Parking', *WAYPOINTS['home'], timeout_sec=nav_timeout):
             raise RuntimeError("Step 7 failed")
 

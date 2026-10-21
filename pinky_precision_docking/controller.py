@@ -99,8 +99,8 @@ class ControllerParams:
     staging_distance: float = 0.30      # rotation centre -> wall where the merge should end
     min_cross_distance: float = 0.12    # crossing closer than this is rejected (0.12m gives 2cm straight margin before 0.10m target)
     intercept_lookahead_min: float = 0.04
-    intercept_max_heading_deg: float = 35.0
-    axis_reached_tol: float = 0.003     # 3mm tolerance to merge onto centerline (was 12mm)
+    intercept_max_heading_deg: float = 65.0  # flexible turning up to 65 deg for large lateral offsets (was 35 deg)
+    axis_reached_tol: float = 0.025     # 25mm realistic tolerance to merge onto centerline (was 3mm)
     max_retreat_distance: float = 0.65  # rotation centre -> wall, upper bound for backing off
     allow_retreat: bool = True          # True: allow backing off when near wall, capped by initial start position
     # stage 2: verification
@@ -108,10 +108,10 @@ class ControllerParams:
     verify_min_cam_updates: int = 3
     verify_timeout: float = 2.5
     # stage 3: terminal
-    fine_max_heading_deg: float = 8.0   # increased from 5.0 to 8.0 deg for agile lateral correction
-    fine_lookahead: float = 0.04        # responsive lookahead for lateral error correction
+    fine_max_heading_deg: float = 15.0  # flexible fine correction up to 15 deg (was 8.0)
+    fine_lookahead: float = 0.08        # smooth lookahead for lateral error correction (was 0.04)
     final_straight: float = 0.03
-    fine_max_lateral: float = 0.03
+    fine_max_lateral: float = 0.045     # 4.5cm fine correctable lateral envelope (was 0.03)
     abort_heading_deg: float = 25.0
     final_dwell: float = 0.6
     final_align_timeout: float = 10.0
@@ -278,7 +278,7 @@ class DockingController:
     def fine_correctable_lateral(self, remain: float) -> float:
         p = self.p
         room = max(0.0, remain - p.final_straight)
-        return min(p.fine_max_lateral, room * math.tan(math.radians(p.fine_max_heading_deg)))
+        return min(p.fine_max_lateral, max(0.025, room * math.tan(math.radians(p.fine_max_heading_deg))))
 
     def lateral_abort_limit(self, remain: float) -> float:
         p = self.p
@@ -424,7 +424,7 @@ class DockingController:
             if est.cam_age > p.cam_lost_timeout and est.sigma_y > p.blind_sigma_y:
                 go(Phase.REACQUIRE, 'marker lost during intercept')
                 return 0.0, 0.0
-            crossed = (est.y * self.y_at_drive_start < 0 and abs(est.y) < 0.006)
+            crossed = (est.y * self.y_at_drive_start <= 0 and abs(est.y) < 0.040)
             if abs(est.y) <= p.axis_reached_tol or crossed:
                 go(Phase.AXIS_ALIGN, f'centreline reached (y={est.y * 100:+.2f} cm, '
                                      f'd={est.d_base:.3f} m)')
@@ -438,6 +438,9 @@ class DockingController:
             stage_d = self.get_staging_distance(est.d_base)
             dist_s = math.hypot(max(est.d_base - stage_d, 0.0), est.y)
             v = clamp(math.sqrt(2.0 * p.a_dec_lin * dist_s), 0.025, p.v_max)
+            # Gentle slowdown as we near the centerline to avoid overshooting
+            if abs(est.y) < 0.08:
+                v = min(v, 0.035)
             v *= clamp(1.0 - abs(err) / math.radians(35.0), 0.0, 1.0)
             self.target = {'psi_cmd': psi_cmd, 'fov_limited': limited,
                            'staging_distance': stage_d}
@@ -447,15 +450,15 @@ class DockingController:
         if self.phase == Phase.AXIS_ALIGN:
             err = -est.psi
             self.target = {'psi_cmd': 0.0}
-            done = abs(err) < ang_tol * 0.2 or (t_phase > 4.0 and abs(err) < ang_tol * p.aim_ratio)
+            done = abs(err) < ang_tol * 0.5 or (t_phase > 2.5 and abs(err) < ang_tol * p.aim_ratio)
             if done:
                 go(Phase.VERIFY, f'perpendicular (psi={math.degrees(est.psi):+.2f} deg)')
                 return 0.0, 0.0
-            if t_phase > 10.0:
+            if t_phase > 8.0:
                 self.retries += 1
                 go(Phase.VERIFY, 'axis align timeout')
                 return 0.0, 0.0
-            return 0.0, self.rotate_law(err, ang_tol * 0.1)
+            return 0.0, self.rotate_law(err, ang_tol * 0.25)
 
         # ---------------------------------------------------------- TERMINAL
         if self.phase == Phase.TERMINAL:
@@ -621,7 +624,7 @@ class DockingController:
         p = self.p
         remain = self.remain(est)
         ang_tol = math.radians(p.angle_tolerance_deg)
-        y_fine = self.fine_correctable_lateral(remain)
+        y_fine = max(self.fine_correctable_lateral(remain), p.axis_reached_tol)
         ay = abs(est.y)
         if remain <= p.distance_tolerance and ay < p.center_tolerance:
             go(Phase.WALL_ALIGN, 'at goal distance')

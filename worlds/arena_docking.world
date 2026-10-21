@@ -3385,7 +3385,7 @@
     <!-- Home Parking Lot Floor Bays & 'P' Markings -->
     <model name="home_parking_bays">
       <static>true</static>
-      <pose>0.0400 0.0000 0.0010 0 0 0</pose>
+      <pose>0.1000 0.0000 0.0010 0 0 0</pose>
       <link name="link">
         <visual name="visual">
           <geometry>
@@ -3410,7 +3410,7 @@
     <!-- Parked Pinky Pro (Left Bay / Slot 1) -->
     <model name="pinky_parked_left">
       <static>true</static>
-      <pose>0.0000 0.2000 0.0000 0 0 0</pose>
+      <pose>0.1200 0.2000 0.0000 0 0 0</pose>
       <link name="link">
         <visual name="base">
           <pose>0 0 0.028 0 0 0</pose>
@@ -3438,7 +3438,7 @@
     <!-- Parked Pinky Pro (Right Bay / Slot 3) -->
     <model name="pinky_parked_right">
       <static>true</static>
-      <pose>0.0000 -0.2000 0.0000 0 0 0</pose>
+      <pose>0.1200 -0.2000 0.0000 0 0 0</pose>
       <link name="link">
         <visual name="base">
           <pose>0 0 0.028 0 0 0</pose>

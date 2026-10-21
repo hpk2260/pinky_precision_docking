@@ -37,7 +37,7 @@ def generate_launch_description():
     )
     spawn_x_arg = DeclareLaunchArgument(
         'spawn_x',
-        default_value='0.0',
+        default_value='0.12',
         description='Robot initial spawn x coordinate in world (Home Parking)',
     )
     spawn_y_arg = DeclareLaunchArgument(

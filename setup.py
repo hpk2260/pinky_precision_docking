@@ -30,6 +30,7 @@ setup(
     entry_points={
         'console_scripts': [
             'precision_docking_node = pinky_precision_docking.precision_docking_node:main',
+            'precision_docking_node_v38 = pinky_precision_docking.precision_docking_node_v38:main',
             'generate_marker = pinky_precision_docking.generate_aruco_marker:main',
             'generate_arena_world = pinky_precision_docking.generate_arena_world:main',
             'run_docking_scenarios = pinky_precision_docking.run_docking_scenarios:main',
