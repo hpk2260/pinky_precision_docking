@@ -40,16 +40,84 @@ from pinky_precision_docking.sound_effects import (
 # Arena Waypoints [x(m), y(m), yaw(rad)]
 WAYPOINTS = {
     'home': [0.1200, 0.0000, 0.0000],
-    'shelf1': [0.6000, 1.4700, 3.1416],  # Shelf 1 Area Representative Pre-docking (Views all 3 bays)
-    'shelf2': [1.1100, 1.5000, -1.5708], # Shelf 2 Area Representative Pre-docking (Centered in Corridor 2)
-    'packaging': [0.7240, 0.2430, 0.1070], # ArUco Marker 5
+    'shelf1': [0.6000, 1.4700, 3.1416],  # Shelf 1 Area Representative Pre-docking (Views all 3 bays: Left=6, Center=7, Right=8)
+    'shelf2': [1.1100, 1.5000, -1.5708], # Shelf 2 Area Representative Pre-docking (Centered in Corridor 2: Left=3, Right=4)
+    'packaging': [0.7240, 0.2430, 0.1070], # Packaging Area Pre-docking (Marker 5)
 }
 
-MARKER_IDS = {
-    'shelf1': 8,  # Shelf 1 Right Bay Marker (ID 8)
-    'shelf2': 3,  # Shelf 2 Left Cooler Marker (ID 3)
-    'packaging': 5,
-}
+# Complete Arena Mission Stations: All 6 ArUco Markers across Area 1, 2, and 3
+ALL_STATIONS = [
+    # Area 1: Shelf 1 (Industrial Pallet Racks - 3 Bays)
+    {
+        'area': 'Shelf 1',
+        'station_id': 'shelf1_bay1',
+        'station_name': 'Shelf 1 Left Bay (선반 1번 좌측 베이, ID 6)',
+        'marker_id': 6,
+        'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
+        'task_type': '부품 A Pick & Place (피킹 및 핑키 적재)',
+        'pre_docking': 'shelf1',
+        'undock_dist': 0.50,
+    },
+    {
+        'area': 'Shelf 1',
+        'station_id': 'shelf1_bay2',
+        'station_name': 'Shelf 1 Center Bay (선반 1번 중앙 베이, ID 7)',
+        'marker_id': 7,
+        'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
+        'task_type': '부품 B Pick & Place (피킹 및 핑키 적재)',
+        'pre_docking': 'shelf1',
+        'undock_dist': 0.50,
+    },
+    {
+        'area': 'Shelf 1',
+        'station_id': 'shelf1_bay3',
+        'station_name': 'Shelf 1 Right Bay (선반 1번 우측 베이, ID 8)',
+        'marker_id': 8,
+        'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
+        'task_type': '부품 C Pick & Place (피킹 및 핑키 적재)',
+        'pre_docking': 'shelf1',
+        'undock_dist': 0.55,
+    },
+    # Area 2: Shelf 2 (Coolers & Refrigeration - 2 Coolers)
+    {
+        'area': 'Shelf 2',
+        'station_id': 'shelf2_cooler1',
+        'station_name': 'Shelf 2 Left Cooler (선반 2번 좌측 냉장고, ID 3)',
+        'marker_id': 3,
+        'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
+        'task_type': '냉장 부품 A Pick & Place (피킹 및 핑키 적재)',
+        'pre_docking': 'shelf2',
+        'undock_dist': 0.60,
+    },
+    {
+        'area': 'Shelf 2',
+        'station_id': 'shelf2_cooler2',
+        'station_name': 'Shelf 2 Right Cooler (선반 2번 우측 냉장고, ID 4)',
+        'marker_id': 4,
+        'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
+        'task_type': '냉장 부품 B Pick & Place (피킹 및 핑키 적재)',
+        'pre_docking': 'shelf2',
+        'undock_dist': 0.65,
+    },
+    # Area 3: Packaging Station (ROBOTIS OpenMANIPULATOR-X)
+    {
+        'area': 'Packaging Station',
+        'station_id': 'packaging',
+        'station_name': 'Packaging Station (포장 구역, ID 5)',
+        'marker_id': 5,
+        'robot_name': 'OpenMANIPULATOR-X (OMX 매니퓰레이터)',
+        'task_type': '적재물 전체 하역 및 자동 포장 (Packaging)',
+        'pre_docking': 'packaging',
+        'undock_dist': 0.35,
+    },
+]
+
+# Legacy Sample Stations (1 per area for quick test)
+SAMPLE_STATIONS = [
+    ALL_STATIONS[2],  # Shelf 1 Right (ID 8)
+    ALL_STATIONS[3],  # Shelf 2 Left (ID 3)
+    ALL_STATIONS[5],  # Packaging (ID 5)
+]
 
 
 class ArenaMissionController:
@@ -402,127 +470,81 @@ class ArenaMissionController:
         return True
 
 
-def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False,
+def run_full_mission(stations: list = None, enable_sound: bool = True, piezo_pin: int = None, use_sim_time: bool = False,
                      nav_timeout: float = 180.0, dock_timeout: float = 120.0,
-                     auto_task: bool = False, task_delay: float = 3.0):
+                     auto_task: bool = False, task_delay: float = 3.0,
+                     return_home: bool = True):
+    if stations is None:
+        stations = ALL_STATIONS
+
     rclpy.init()
     ctrl = ArenaMissionController(enable_sound=enable_sound, piezo_pin=piezo_pin, use_sim_time=use_sim_time)
 
-    print("\n" + "="*70)
+    num_stations = len(stations)
+    total_stages = num_stations + (1 if return_home else 0)
+
+    print("\n" + "="*75)
     print("      🚀 STARTING PINKY PRO ARENA E2E MULTI-STATION MISSION 🚀")
-    print("="*70)
-    print("Mission Plan:")
-    print("  1. Home Parking -> Shelf 1 Pre-docking")
-    print("  2. Dock to Shelf 1 Right Bay (ArUco ID 8) & Doosan Arm Pick & Place")
-    print("  3. Undock -> Shelf 2 Pre-docking")
-    print("  4. Dock to Shelf 2 Left Cooler (ArUco ID 3) & Doosan Arm Pick & Place")
-    print("  5. Undock -> Packaging Area Pre-docking")
-    print("  6. Dock to Packaging Station (ArUco ID 5) & OMX Packaging Task")
-    print("  7. Undock -> Return to Home Parking")
-    print("="*70 + "\n")
+    print("="*75)
+    print(f"Mission Plan ({num_stations} Stations Total):")
+    for idx, st in enumerate(stations, 1):
+        print(f"  [{idx}/{total_stages}] {st['station_name']} | Marker ID {st['marker_id']} | Area: {st['area']}")
+    if return_home:
+        print(f"  [{total_stages}/{total_stages}] Return to Home Parking {WAYPOINTS['home']}")
+    print("="*75 + "\n")
 
     mission_start_t = time.time()
 
     try:
-        # Step 1: Home -> Shelf 1 Pre-docking
-        print("\n------------------------------------------------------------")
-        print(" [Step 1/7] Home Parking -> Shelf Spot 1 Pre-docking (Right Bay)")
-        print("------------------------------------------------------------")
-        if not ctrl.navigate_to('Shelf 1 Pre-docking', *WAYPOINTS['shelf1'], timeout_sec=nav_timeout):
-            raise RuntimeError("Step 1 failed")
-        time.sleep(1.0)
+        for idx, station in enumerate(stations, 1):
+            pre_dock_key = station['pre_docking']
+            pre_dock_pose = WAYPOINTS[pre_dock_key]
 
-        # Step 2: Docking at Shelf 1 (Marker ID 8)
-        print("\n------------------------------------------------------------")
-        print(" [Step 2/7] Precision Docking at Shelf 1 Right Bay (Marker ID 8)")
-        print("------------------------------------------------------------")
-        if not ctrl.execute_docking('Shelf 1', MARKER_IDS['shelf1'], timeout_sec=dock_timeout):
-            raise RuntimeError("Step 2 failed")
+            print("\n" + "#"*72)
+            print(f"  📍 [STAGE {idx}/{total_stages}] {station['station_name']}")
+            print("#"*72)
 
-        # External Arm Task (Shelf 1)
-        ctrl.wait_for_station_task(
-            station_id='shelf1',
-            station_name='Shelf 1 Right Bay (선반 1번 우측 베이)',
-            robot_name='두산 로봇팔 (Doosan Collaborative Robot)',
-            task_type='부품 Pick & Place (피킹 및 핑키 적재)',
-            auto_mode=auto_task,
-            auto_duration=task_delay
-        )
+            # Step 1: Navigate to Pre-docking Waypoint
+            print(f"\n>>> [Stage {idx}-1] Navigating to Pre-docking Waypoint '{pre_dock_key}'...")
+            if not ctrl.navigate_to(f"{pre_dock_key} Pre-docking", *pre_dock_pose, timeout_sec=nav_timeout):
+                raise RuntimeError(f"Navigation to {pre_dock_key} pre-docking failed for {station['station_name']}")
+            time.sleep(1.0)
 
-        # Step 3: Undock -> Shelf 2 Pre-docking
-        print("\n------------------------------------------------------------")
-        print(" [Step 3/7] Undock -> Shelf Spot 2 Pre-docking (Left Cooler)")
-        print("------------------------------------------------------------")
-        # Step 3-1: Back up into the open central aisle (X from ~0.08m to ~0.65m)
-        ctrl.undock_backup(distance_m=0.55, speed=-0.05, timeout_sec=25.0)
-        time.sleep(0.5)
+            # Step 2: Precision Docking to ArUco Marker
+            print(f"\n>>> [Stage {idx}-2] Precision Docking to Marker ID {station['marker_id']}...")
+            if not ctrl.execute_docking(station['station_name'], station['marker_id'], timeout_sec=dock_timeout):
+                raise RuntimeError(f"Precision docking failed at {station['station_name']} (ID {station['marker_id']})")
 
-        if not ctrl.navigate_to('Shelf 2 Pre-docking', *WAYPOINTS['shelf2'], timeout_sec=nav_timeout):
-            raise RuntimeError("Step 3 failed")
-        time.sleep(1.0)
+            # Step 3: External Manipulator Task Execution
+            print(f"\n>>> [Stage {idx}-3] External Manipulator Task...")
+            ctrl.wait_for_station_task(
+                station_id=station['station_id'],
+                station_name=station['station_name'],
+                robot_name=station['robot_name'],
+                task_type=station['task_type'],
+                auto_mode=auto_task,
+                auto_duration=task_delay
+            )
 
-        # Step 4: Docking at Shelf 2 (Marker ID 3)
-        print("\n------------------------------------------------------------")
-        print(" [Step 4/7] Precision Docking at Shelf 2 Left Cooler (Marker ID 3)")
-        print("------------------------------------------------------------")
-        if not ctrl.execute_docking('Shelf 2', MARKER_IDS['shelf2'], timeout_sec=dock_timeout):
-            raise RuntimeError("Step 4 failed")
+            # Step 4: Closed-loop Undock Backup
+            undock_dist = station.get('undock_dist', 0.50)
+            print(f"\n>>> [Stage {idx}-4] Undock Backing Up ({undock_dist*100:.1f}cm)...")
+            ctrl.undock_backup(distance_m=undock_dist, speed=-0.05, timeout_sec=30.0)
+            time.sleep(0.5)
 
-        # External Arm Task (Shelf 2)
-        ctrl.wait_for_station_task(
-            station_id='shelf2',
-            station_name='Shelf 2 Left Cooler (선반 2번 좌측 냉장고)',
-            robot_name='두산 로봇팔 (Doosan Collaborative Robot)',
-            task_type='추가 부품 Pick & Place (피킹 및 핑키 적재)',
-            auto_mode=auto_task,
-            auto_duration=task_delay
-        )
-
-        # Step 5: Undock -> Packaging Pre-docking
-        print("\n------------------------------------------------------------")
-        print(" [Step 5/7] Undock -> Packaging Station Pre-docking")
-        print("------------------------------------------------------------")
-        # Step 5-1: Back up straight out of Shelf 2 fully into the open north aisle (Y from ~1.00m to ~1.65m)
-        ctrl.undock_backup(distance_m=0.65, speed=-0.05, timeout_sec=30.0)
-        time.sleep(0.5)
-
-        # Step 5-2: Smoothly navigate from North Corridor exit to Packaging Area Pre-docking
-        if not ctrl.navigate_to('Packaging Pre-docking', *WAYPOINTS['packaging'], timeout_sec=nav_timeout):
-            raise RuntimeError("Step 5 failed")
-        time.sleep(1.0)
-
-        # Step 6: Docking at Packaging Station (Marker ID 5)
-        print("\n------------------------------------------------------------")
-        print(" [Step 6/7] Precision Docking at Packaging Station (Marker ID 5)")
-        print("------------------------------------------------------------")
-        if not ctrl.execute_docking('Packaging Station', MARKER_IDS['packaging'], timeout_sec=dock_timeout):
-            raise RuntimeError("Step 6 failed")
-
-        # External Arm Task (Packaging)
-        ctrl.wait_for_station_task(
-            station_id='packaging',
-            station_name='Packaging Station (포장 구역)',
-            robot_name='OpenMANIPULATOR-X (OMX 매니퓰레이터)',
-            task_type='적재물 하역 및 자동 포장 (Packaging)',
-            auto_mode=auto_task,
-            auto_duration=task_delay
-        )
-
-        # Step 7: Undock -> Return Home
-        print("\n------------------------------------------------------------")
-        print(" [Step 7/7] Undock -> Return to Home Parking")
-        print("------------------------------------------------------------")
-        # Step 7-1: Back up straight out of Packaging station into the central aisle (X from ~0.83m to ~0.50m)
-        ctrl.undock_backup(distance_m=0.35, speed=-0.05, timeout_sec=20.0)
-        time.sleep(0.5)
-
-        if not ctrl.navigate_to('Home Parking', *WAYPOINTS['home'], timeout_sec=nav_timeout):
-            raise RuntimeError("Step 7 failed")
+        # Final Stage: Return to Home Parking
+        if return_home:
+            home_idx = total_stages
+            print("\n" + "#"*72)
+            print(f"  🏁 [STAGE {home_idx}/{total_stages}] Return to Home Parking")
+            print("#"*72)
+            if not ctrl.navigate_to('Home Parking', *WAYPOINTS['home'], timeout_sec=nav_timeout):
+                raise RuntimeError("Return navigation to Home Parking failed")
 
         total_elapsed = time.time() - mission_start_t
-        print("\n" + "="*70)
-        print(f"  🎉 [SUCCESS] ENTIRE MISSION COMPLETED IN {total_elapsed:.1f} SECONDS! 🎉")
-        print("="*70 + "\n")
+        print("\n" + "="*75)
+        print(f"  🎉 [SUCCESS] ENTIRE MISSION ({num_stations} STATIONS) COMPLETED IN {total_elapsed:.1f} SECONDS! 🎉")
+        print("="*75 + "\n")
 
     except Exception as e:
         print(f"\n❌ [MISSION ABORTED] Reason: {e}")
@@ -532,7 +554,9 @@ def run_full_mission(enable_sound: bool = True, piezo_pin: int = None, use_sim_t
 
 def main():
     parser = argparse.ArgumentParser(description="Pinky Pro Arena Full E2E Mission")
-    parser.add_argument('--step', default='all', help="Specific step to run: all, 1, 2, 3, 4, 5, 6, 7")
+    parser.add_argument('--step', default='all', help="Run specific step/station: 'all', 'home', station index (1-6), or marker ID (3,4,5,6,7,8)")
+    parser.add_argument('--sample', action='store_true', help="Run 3 representative stations (Shelf 1 Right ID 8, Shelf 2 Left ID 3, Packaging ID 5)")
+    parser.add_argument('--no-home', action='store_true', help="Do not return to home parking after finishing stations")
     parser.add_argument('--no-sound', action='store_true', help="Disable sound effects")
     parser.add_argument('--buzzer-pin', type=int, default=None, help="Raspberry Pi GPIO pin for piezo buzzer")
     parser.add_argument('--sim', action='store_true', help="Enable use_sim_time for Gazebo simulation")
@@ -542,14 +566,50 @@ def main():
     parser.add_argument('--task-delay', type=float, default=3.0, help="Simulated task duration in seconds if --auto-task is enabled (default: 3.0)")
     args = parser.parse_args()
 
+    # Determine station selection
+    base_stations = SAMPLE_STATIONS if args.sample else ALL_STATIONS
+
+    if args.step == 'all':
+        stations_to_run = base_stations
+        return_home = not args.no_home
+    elif args.step == 'home':
+        stations_to_run = []
+        return_home = True
+    elif args.step.isdigit():
+        val = int(args.step)
+        # Check if val is a 1-based station index
+        if 1 <= val <= len(base_stations):
+            stations_to_run = [base_stations[val - 1]]
+            return_home = not args.no_home
+        else:
+            # Check if val is a marker ID
+            matching = [s for s in ALL_STATIONS if s['marker_id'] == val]
+            if matching:
+                stations_to_run = matching
+                return_home = not args.no_home
+            else:
+                print(f"[Error] Unknown station step or marker ID: {args.step}")
+                sys.exit(1)
+    else:
+        # Check by station_id or name substring
+        matching = [s for s in ALL_STATIONS if args.step.lower() in s['station_id'].lower() or args.step.lower() in s['station_name'].lower()]
+        if matching:
+            stations_to_run = matching
+            return_home = not args.no_home
+        else:
+            print(f"[Error] Unknown step argument: {args.step}")
+            sys.exit(1)
+
     run_full_mission(
+        stations=stations_to_run,
         enable_sound=not args.no_sound,
         piezo_pin=args.buzzer_pin,
         use_sim_time=args.sim,
         nav_timeout=args.nav_timeout,
         dock_timeout=args.dock_timeout,
         auto_task=args.auto_task,
-        task_delay=args.task_delay
+        task_delay=args.task_delay,
+        return_home=return_home
     )
 
 
