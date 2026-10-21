@@ -1,4 +1,4 @@
-# Pinky Precision Docking (v5.0)
+# Pinky Precision Docking (v6.0)
 
 [![ROS 2](https://img.shields.io/badge/ROS%202-Jazzy%20%7C%20Humble-blue.svg)](https://docs.ros.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
@@ -10,7 +10,11 @@ Achieves sub-centimeter distance accuracy ($< 4.5\text{ mm}$), millimeter-level 
 
 ---
 
-## 🎯 Key Capabilities & Architecture (v5.0)
+## 🎯 Key Capabilities & Architecture (v6.0)
+
+- **Continuous Curved Intercept (Option 4)**: Glides directly along smooth kinematic arcs into terminal alignment, minimizing oscillation, stop-and-turn jerks, and unnecessary retreats.
+- **Full E2E Arena Multi-Station Support**: Seamless mission execution across all 6 industrial arena docking bays (Area 1: ID 8, 9, 7; Area 2: ID 4, 2; Area 3: ID 5).
+- **Vision-LiDAR Sensor Fusion**: Robust fusion of OpenCV IPPE ArUco corner solving with RANSAC front LiDAR line fitting.
 
 ```
 [Monocular Camera] ---> [ArUco Detector (IPPE_SQUARE)] ---\

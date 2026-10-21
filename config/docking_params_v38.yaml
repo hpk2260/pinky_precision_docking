@@ -1,0 +1,41 @@
+precision_docking_node:
+  ros__parameters:
+    # Marker Settings
+    marker_size: 0.06           # meters (6cm x 6cm)
+    target_marker_id: -1        # Target Marker ID (-1: auto-detect & lock onto any marker)
+    aruco_dictionary_id: "DICT_5X5_250"  # Supports DICT_5X5_50, 5X5_100, 5X5_250
+
+    # Topics
+    use_compressed: true
+    image_topic: "/camera/image_raw"
+    camera_info_topic: "/camera/camera_info"
+    cmd_vel_topic: "/cmd_vel"
+
+    # Docking Goal & Thresholds
+    target_distance: 0.20
+    distance_tolerance: 0.02
+    yaw_tolerance: 0.04
+    lateral_tolerance: 0.02
+
+    # Advanced Features (T-Maneuver Collinear Alignment)
+    enable_t_maneuver: true       # Orthogonal T-maneuver (90 deg turn -> lateral drive -> 90 deg return)
+    t_maneuver_min_dist: 0.20     # Minimum distance from marker to perform T-maneuver (m)
+    t_maneuver_lateral_speed: 0.05 # Low-speed lateral drive velocity (m/s)
+    enable_wall_alignment: false  # Pure direct marker pursuit (prevents turning away from marker)
+    enable_blind_push: true       # Use odometry for <10cm ultra-close docking (prevents marker lost)
+    vision_min_distance: 0.14     # Hand-off distance to odometry blind drive (m)
+    blind_push_speed: 0.04        # Low-speed straight push velocity (m/s)
+
+    # Controller Gains & Limits
+    kp_linear: 0.5
+    kp_angular: 1.2
+    max_linear_vel: 0.10
+    max_angular_vel: 0.35
+    min_linear_vel: 0.02
+    min_angular_vel: 0.05
+    invert_angular: false
+
+    # Safety & Filter
+    loss_timeout: 1.2
+    ema_alpha: 0.6
+    search_angular_vel: 0.20

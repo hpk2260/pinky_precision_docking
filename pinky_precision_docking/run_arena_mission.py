@@ -40,19 +40,23 @@ from pinky_precision_docking.sound_effects import (
 # Arena Waypoints [x(m), y(m), yaw(rad)]
 WAYPOINTS = {
     'home': [0.1200, 0.0000, 0.0000],
-    'shelf1': [0.6000, 1.4700, 3.1416],  # Shelf 1 Area Representative Pre-docking (Views all 3 bays: Left=6, Center=7, Right=8)
-    'shelf2': [1.1100, 1.5000, -1.5708], # Shelf 2 Area Representative Pre-docking (Centered in Corridor 2: Left=3, Right=4)
+    'shelf1': [0.6000, 1.4700, 3.1416],  # Shelf 1 Area Representative Pre-docking (Views all 3 bays: Left=8, Center=9, Right=7)
+    'shelf2': [1.1100, 1.5000, -1.5708], # Shelf 2 Area Representative Pre-docking (Centered in Corridor 2: Left=4, Right=2)
     'packaging': [0.7240, 0.2430, 0.1070], # Packaging Area Pre-docking (Marker 5)
 }
 
 # Complete Arena Mission Stations: All 6 ArUco Markers across Area 1, 2, and 3
+# Actual Physical Environment Marker Layout:
+# Area 1 (Shelf 1): Left=8, Center=9, Right=7
+# Area 2 (Shelf 2): Left=4, Right=2
+# Area 3 (Packaging): Marker 5
 ALL_STATIONS = [
-    # Area 1: Shelf 1 (Industrial Pallet Racks - 3 Bays)
+    # Area 1: Shelf 1 (Industrial Pallet Racks - 3 Bays: Left=8, Center=9, Right=7)
     {
         'area': 'Shelf 1',
         'station_id': 'shelf1_bay1',
-        'station_name': 'Shelf 1 Left Bay (선반 1번 좌측 베이, ID 6)',
-        'marker_id': 6,
+        'station_name': 'Shelf 1 Left Bay (선반 1번 좌측 베이, ID 8)',
+        'marker_id': 8,
         'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
         'task_type': '부품 A Pick & Place (피킹 및 핑키 적재)',
         'pre_docking': 'shelf1',
@@ -61,8 +65,8 @@ ALL_STATIONS = [
     {
         'area': 'Shelf 1',
         'station_id': 'shelf1_bay2',
-        'station_name': 'Shelf 1 Center Bay (선반 1번 중앙 베이, ID 7)',
-        'marker_id': 7,
+        'station_name': 'Shelf 1 Center Bay (선반 1번 중앙 베이, ID 9)',
+        'marker_id': 9,
         'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
         'task_type': '부품 B Pick & Place (피킹 및 핑키 적재)',
         'pre_docking': 'shelf1',
@@ -71,19 +75,19 @@ ALL_STATIONS = [
     {
         'area': 'Shelf 1',
         'station_id': 'shelf1_bay3',
-        'station_name': 'Shelf 1 Right Bay (선반 1번 우측 베이, ID 8)',
-        'marker_id': 8,
+        'station_name': 'Shelf 1 Right Bay (선반 1번 우측 베이, ID 7)',
+        'marker_id': 7,
         'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
         'task_type': '부품 C Pick & Place (피킹 및 핑키 적재)',
         'pre_docking': 'shelf1',
         'undock_dist': 0.55,
     },
-    # Area 2: Shelf 2 (Coolers & Refrigeration - 2 Coolers)
+    # Area 2: Shelf 2 (Coolers & Refrigeration - 2 Coolers: Left=4, Right=2)
     {
         'area': 'Shelf 2',
         'station_id': 'shelf2_cooler1',
-        'station_name': 'Shelf 2 Left Cooler (선반 2번 좌측 냉장고, ID 3)',
-        'marker_id': 3,
+        'station_name': 'Shelf 2 Left Cooler (선반 2번 좌측 냉장고, ID 4)',
+        'marker_id': 4,
         'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
         'task_type': '냉장 부품 A Pick & Place (피킹 및 핑키 적재)',
         'pre_docking': 'shelf2',
@@ -92,8 +96,8 @@ ALL_STATIONS = [
     {
         'area': 'Shelf 2',
         'station_id': 'shelf2_cooler2',
-        'station_name': 'Shelf 2 Right Cooler (선반 2번 우측 냉장고, ID 4)',
-        'marker_id': 4,
+        'station_name': 'Shelf 2 Right Cooler (선반 2번 우측 냉장고, ID 2)',
+        'marker_id': 2,
         'robot_name': '두산 로봇팔 (Doosan Collaborative Robot)',
         'task_type': '냉장 부품 B Pick & Place (피킹 및 핑키 적재)',
         'pre_docking': 'shelf2',
@@ -114,8 +118,8 @@ ALL_STATIONS = [
 
 # Legacy Sample Stations (1 per area for quick test)
 SAMPLE_STATIONS = [
-    ALL_STATIONS[2],  # Shelf 1 Right (ID 8)
-    ALL_STATIONS[3],  # Shelf 2 Left (ID 3)
+    ALL_STATIONS[0],  # Shelf 1 Left (ID 8)
+    ALL_STATIONS[3],  # Shelf 2 Left (ID 4)
     ALL_STATIONS[5],  # Packaging (ID 5)
 ]
 
