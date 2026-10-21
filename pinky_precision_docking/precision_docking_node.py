@@ -101,7 +101,8 @@ class PrecisionDockingNode(Node):
             w_search=self.search_angular_vel,
             staging_distance=0.30,
             min_cross_distance=0.12,
-            allow_retreat=self.allow_retreat
+            allow_retreat=self.allow_retreat,
+            enable_continuous_curve=self.enable_continuous_curve
         )
         self.controller = DockingController(self.ctrl_params)
 
@@ -208,10 +209,12 @@ class PrecisionDockingNode(Node):
         self.declare_parameter('min_angular_vel', 0.04)
         self.declare_parameter('search_angular_vel', 0.30)
         self.declare_parameter('allow_retreat', True)
+        self.declare_parameter('enable_continuous_curve', True)
         self.declare_parameter('osd_bg_alpha', 0.35)
         self.declare_parameter('csv_log_path', '/home/user/pinky_pro/docking_experiment_log.csv')
 
         self.start_in_idle = bool(self.get_parameter('start_in_idle').value)
+        self.enable_continuous_curve = bool(self.get_parameter('enable_continuous_curve').value)
         self.trigger_service_name = str(self.get_parameter('trigger_service_name').value)
         self.cancel_service_name = str(self.get_parameter('cancel_service_name').value)
 

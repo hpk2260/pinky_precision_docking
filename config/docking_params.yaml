@@ -32,10 +32,13 @@ precision_docking_node:
 
     target_distance: 0.10             # 목표 도킹 완료 거리 (m)
     distance_tolerance: 0.01          # 거리 허용 오차 (0.01m = 1cm)
-    center_tolerance: 0.005           # 좌우 중심 허용 오차 (0.005m = 5mm 정밀 도킹)
+    center_tolerance: 0.012           # 좌우 중심 허용 오차 (0.012m = 1.2cm 실물 노이즈 안정화 및 불필요한 후진 방지)
     angle_tolerance_deg: 2.0          # 수직 정렬 각도 허용 오차 (2.0 deg)
     target_wall_angle_deg: 0.0        # 목표 벽면 상대 각도 (0.0: 전면 범퍼 11자 평행, 90.0: 측면 평행)
     wall_align_tol_deg: 0.5           # 벽면 평행 정렬 허용 각도 오차 (0.5 deg 이내 초정밀 정렬)
+
+    # 방안 4 연속 곡선 주행 설정 (부드러운 원샷 도킹 & 후진 최소화)
+    enable_continuous_curve: true     # true: 방안 4 적용 (연속 곡선 직접 진입), false: 단계별 정지 정렬
 
     # 5. Pose 제어 게인 설정 (부드러운 연속 S-Curve 및 울컥거림 방지)
     kp_linear: 0.55

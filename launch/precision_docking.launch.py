@@ -125,6 +125,12 @@ def generate_launch_description():
         description='Allow retreating/backing off during recovery (capped by initial start position)',
     )
 
+    enable_continuous_curve_arg = DeclareLaunchArgument(
+        'enable_continuous_curve',
+        default_value='True',
+        description='Option 4: Smooth continuous curved intercept into terminal approach',
+    )
+
     osd_bg_alpha_arg = DeclareLaunchArgument(
         'osd_bg_alpha',
         default_value='0.35',
@@ -163,6 +169,7 @@ def generate_launch_description():
                 'target_wall_angle_deg': LaunchConfiguration('target_wall_angle_deg'),
                 'wall_align_tol_deg': LaunchConfiguration('wall_align_tol_deg'),
                 'allow_retreat': LaunchConfiguration('allow_retreat'),
+                'enable_continuous_curve': LaunchConfiguration('enable_continuous_curve'),
                 'osd_bg_alpha': LaunchConfiguration('osd_bg_alpha'),
                 'csv_log_path': LaunchConfiguration('csv_log_path'),
             },
@@ -189,6 +196,7 @@ def generate_launch_description():
         target_wall_angle_deg_arg,
         wall_align_tol_deg_arg,
         allow_retreat_arg,
+        enable_continuous_curve_arg,
         osd_bg_alpha_arg,
         csv_log_path_arg,
         docking_node,

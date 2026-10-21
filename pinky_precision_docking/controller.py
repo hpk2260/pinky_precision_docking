@@ -96,6 +96,7 @@ class ControllerParams:
     a_dec_ang: float = 0.8
     k_heading: float = 2.2
     # stage 1: intercept
+    enable_continuous_curve: bool = True # Option 4: Continuous curved intercept directly into terminal without in-place stop
     staging_distance: float = 0.30      # rotation centre -> wall where the merge should end
     min_cross_distance: float = 0.12    # crossing closer than this is rejected (0.12m gives 2cm straight margin before 0.10m target)
     intercept_lookahead_min: float = 0.04
@@ -426,6 +427,13 @@ class DockingController:
                 return 0.0, 0.0
             crossed = (est.y * self.y_at_drive_start <= 0 and abs(est.y) < 0.040)
             if abs(est.y) <= p.axis_reached_tol or crossed:
+                # Option 4 Continuous Curved Intercept:
+                # If robot is already oriented toward the wall within fine heading limit (15 deg),
+                # directly glide into TERMINAL approach without stopping for in-place AXIS_ALIGN!
+                if p.enable_continuous_curve and abs(est.psi) < math.radians(p.fine_max_heading_deg):
+                    go(Phase.TERMINAL, f'continuous curve direct entry (y={est.y * 100:+.2f} cm, '
+                                       f'psi={math.degrees(est.psi):+.1f} deg, d={est.d_base:.3f} m)')
+                    return 0.0, 0.0
                 go(Phase.AXIS_ALIGN, f'centreline reached (y={est.y * 100:+.2f} cm, '
                                      f'd={est.d_base:.3f} m)')
                 return 0.0, 0.0
